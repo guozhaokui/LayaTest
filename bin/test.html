@@ -39,10 +39,12 @@
             //console.log('Connected to WebSocket server');
         });
 
-        socket.addEventListener('message', (event) => {
+        socket.addEventListener('message', async(event) => {
             const data = JSON.parse(event.data);
             if (data.type === 'fileChanged') {
                 console.log('File changed:', data.file);
+                //let exp = await import('./'+data.file);
+                //debugger;
                 // 如果变更的文件与当前页面相关，则刷新
                 if (isRelevantFile(data.file)) {
                     location.reload();

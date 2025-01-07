@@ -21,9 +21,9 @@ async function test(){
     Shader3D.debugMode = true;
     URL.basePath += "sample-resource/";
 
-    // var bg = new Sprite();
-    // bg.loadImage("res/bg2.png");
-    // Laya.stage.addChild(bg);
+    var bg = new Sprite();
+    bg.loadImage("res/bg2.png");
+    Laya.stage.addChild(bg);
 
     let bg2 = new Sprite();
     bg2.loadImage("res/bg2.png");
