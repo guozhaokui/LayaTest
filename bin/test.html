@@ -32,7 +32,7 @@
             }
         }
     </script>
-    <script>
+    <script type='module'>
         const socket = new WebSocket(`ws://${location.host}`);
 
         socket.addEventListener('open', (event) => {
@@ -43,10 +43,23 @@
             const data = JSON.parse(event.data);
             if (data.type === 'fileChanged') {
                 console.log('File changed:', data.file);
-                //let exp = await import('./'+data.file);
-                //debugger;
+                let src = data.file.replace('layaAir','')
+                if(src.startsWith('/')||src.startsWith('\\')){
+                    src = src.substring(1)
+                }
+                if(src.endsWith('.ts')){
+                    src = src.substring(0,src.length-3)+'.js?'+Date.now();
+                }
+                const cleanPath = src.replace(/\\/g, '/')  // 转换斜杠
+                // 动态import只能是绝对路径，无法应用importmap
+                const moduleUrl = import.meta.resolve(cleanPath);
+                console.log('解析后的URL:', moduleUrl);        
+                let refresh = true;
+                if(window.curexp && window.curexp.onfilechange){
+                    refresh = await window.curexp.onfilechange(moduleUrl);
+                }
                 // 如果变更的文件与当前页面相关，则刷新
-                if (isRelevantFile(data.file)) {
+                if (refresh) {
                     location.reload();
                 }
             }

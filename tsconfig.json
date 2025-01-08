@@ -1,14 +1,15 @@
 {
     "compilerOptions": {
+      "module": "ESNext",
       "baseUrl": ".",
       "paths": {
-        "laya/*": ["../LayaAir/src/layaAir/laya/*"],
-        "Laya3D": ["../LayaAir/src/layaAir/Laya3D"],
-        "Config3D": ["../LayaAir/src/layaAir/Config3D"],
-        "ILaya3D": ["../LayaAir/src/layaAir/ILaya3D"],
-        "Laya": ["../LayaAir/src/layaAir/Laya"],
-        "Config": ["../LayaAir/src/layaAir/Config"],
-        "ILaya": ["../LayaAir/src/layaAir/ILaya"]
+        "laya/*": ["../LayaAir2/src/layaAir/laya/*"],
+        "Laya3D": ["../LayaAir2/src/layaAir/Laya3D"],
+        "Config3D": ["../LayaAir2/src/layaAir/Config3D"],
+        "ILaya3D": ["../LayaAir2/src/layaAir/ILaya3D"],
+        "Laya": ["../LayaAir2/src/layaAir/Laya"],
+        "Config": ["../LayaAir2/src/layaAir/Config"],
+        "ILaya": ["../LayaAir2/src/layaAir/ILaya"]
       },
     },
   }

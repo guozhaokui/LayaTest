@@ -9,7 +9,8 @@ async function testf(){
     (window as any).Laya=Laya;
     await import('./result');
     //@ts-ignore
-    await import('./cases/2d/'+testfile);
+    let exp = await import('./cases/2d/'+testfile);
+    (window as any).curexp = exp;
     (window as any).testEnd=true;
 }
 

@@ -18,7 +18,7 @@ import { Quaternion } from "laya/maths/Quaternion";
 import { Vector3 } from "laya/maths/Vector3";
 import { Mesh } from "laya/d3/resource/models/Mesh";
 import { IK_Target } from "laya/IK/IK_Pose1";
-import { rotationTo } from "laya/IK/IK_Utils";
+import { ClsInst, rotationTo } from "laya/IK/IK_Utils";
 import { IK_AngleLimit, IK_HingeConstraint } from "laya/IK/IK_Constraint";
 import { IK_System } from "laya/IK/IK_System";
 import { CameraController1 } from "../../utils/CameraController1";
@@ -167,4 +167,16 @@ async function test() {
 
 test();
 
+
+export async function onfilechange(f: string) {
+    try {
+        const module = await import(f);
+        for(let mem in module){
+            ClsInst.upateType(module[mem]);
+        }
+    } catch (error) {
+        console.error('模块导入失败:', error);
+    }
+    return false;
+}
 
