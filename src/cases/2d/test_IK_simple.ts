@@ -40,12 +40,12 @@ class IKDemo {
     private iksys:IK_System;
     private chain:IK_Chain;
     private target: Sprite3D;
-    private joints: Sprite3D[];
     private targetPose = new IK_Target(new Vector3(), new Quaternion())
 
     constructor(scene:Scene3D, camera:Camera) {
         this.scene = scene;
         this.iksys = new IK_System(scene);
+        this.iksys.showDbg=true;
         this.camera=camera;
         this.createIKChain();
         this.target = createMeshSprite(PrimitiveMesh.createSphere(0.1),new Color(1,0,0,1));
@@ -61,7 +61,6 @@ class IKDemo {
     private createIKChain(): void {
         let chain =this.chain= new IK_Chain();
         this.iksys.addChain(chain);
-        this.joints = [];
 
         const numJoints = 5;
         const jointLength = 1;
@@ -72,32 +71,15 @@ class IKDemo {
             const position = new Vector3(0, i * jointLength, 0);
             const joint = new IK_Joint();
             joint.name = ''+i;
-            joint.angleLimit = new IK_AngleLimit( new Vector3(-Math.PI, 0,0), new Vector3(Math.PI, 0,0))
             chain.addJoint(joint, position, true);
-            if(i>=2){
-                if(i==3){
-                    joint.angleLimit = new IK_HingeConstraint(new Vector3(1,0,0),null,-Math.PI/4, Math.PI/4, true);
-                }else{
-                    //joint.angleLimit = new IK_AngleLimit( new Vector3(-Math.PI, 0,-Math.PI), new Vector3(Math.PI, 0,Math.PI))
-                }
-            }
-
-            const cylinderJoint = createMeshSprite(PrimitiveMesh.createCylinder(0.01, jointLength),new Color(1,1,1,1));
-            cylinderJoint.transform.localRotation = r1;
-            cylinderJoint.transform.localPosition = new Vector3(0,0,jointLength*0.5);
-            let sp = new Sprite3D();
-            sp.addChild(cylinderJoint);
-            let b = createMeshSprite(PrimitiveMesh.createSphere(0.02),new Color(0,1,0,1));
-            sp.addChild(b);
-            sp.transform.position = position;
-            this.scene.addChild(sp);
-            this.joints.push(sp);
         }
         chain.setEndEffector(numJoints-1)
-        //this.joints[numJoints-1].active=false;  //最后一个是个球
+        this.chain.target = this.targetPose;
+        this.iksys.buildDbgModel();
 
-        //this.solver = new IK_CCDSolver();
-        //this.solver = new IK_FABRIK_Solver();
+        //设置约束
+        //chain.joints[2].angleLimit = new IK_AngleLimit( new Vector3(-Math.PI, 0,-Math.PI), new Vector3(Math.PI, 0,Math.PI))
+        chain.joints[3].angleLimit = new IK_HingeConstraint(new Vector3(1,0,0),null,-Math.PI/4, Math.PI/4, true);
     }
 
     private onUpdate(): void {
@@ -110,27 +92,14 @@ class IKDemo {
             0//Math.cos(time * 0.5) * 3
         );
         targetPos.setValue(-2,0,0);
-        this.targetPose.pos = this.target.transform.position.clone();
+        //this.targetPose.pos = this.target.transform.position.clone();
         //DEBUG
         //this.targetPose.pos = new Vector3(0,2,-3);
         //targetPos.setValue(3,3,0)
 
-        this.target.transform.position = targetPos;
-
-        this.chain.target = this.targetPose;
-        // Solve IK
+        //this.target.transform.position = targetPos;
+        
         this.iksys.onUpdate();
-
-        //this.solver.solve(this.chain, this.targetPose);
-
-        // Update joint visuals
-        for (let i = 0; i < this.chain.joints.length; i++) {
-            const joint = this.chain.joints[i];
-            const cylinderJoint = this.joints[i];
-
-            cylinderJoint.transform.position = joint.position;
-            cylinderJoint.transform.rotation = joint.rotationQuat;
-        }
     }
 }
 
