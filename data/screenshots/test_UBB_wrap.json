@@ -2,11 +2,11 @@
   {
     "time": 300,
     "rect": {
-      "x": 89,
-      "y": 6,
-      "width": 268,
-      "height": 257
+      "x": 82,
+      "y": 5,
+      "width": 272,
+      "height": 259
     },
-    "answer": "test_UBB_wrap_0_20241011T094806.png"
+    "answer": "test_UBB_wrap_0.png"
   }
 ]

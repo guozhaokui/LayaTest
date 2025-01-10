@@ -2,11 +2,11 @@
   {
     "time": 300,
     "rect": {
-      "x": 70,
-      "y": 68,
-      "width": 550,
-      "height": 561
+      "x": 69,
+      "y": 47,
+      "width": 546,
+      "height": 595
     },
-    "answer": "img_text_0_20241009T144412.png"
+    "answer": "img_text_0.png"
   }
 ]

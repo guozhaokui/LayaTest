@@ -2,21 +2,21 @@
   {
     "time": 300,
     "rect": {
-      "x": 77,
-      "y": 74,
-      "width": 297,
-      "height": 237
+      "x": 79,
+      "y": 69,
+      "width": 307,
+      "height": 243
     },
-    "answer": "txt_gc_0_20241009T150355.png"
+    "answer": "txt_gc_0.png"
   },
   {
     "time": 3000,
     "rect": {
-      "x": 77,
-      "y": 74,
-      "width": 297,
-      "height": 237
+      "x": 89,
+      "y": 201,
+      "width": 129,
+      "height": 64
     },
-    "answer": "txt_gc_1_20241009T150358.png"
+    "answer": "txt_gc_1.png"
   }
 ]

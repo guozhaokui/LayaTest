@@ -2,21 +2,21 @@
   {
     "time": 300,
     "rect": {
-      "x": 77,
-      "y": 62,
-      "width": 196,
-      "height": 181
+      "x": 90,
+      "y": 86,
+      "width": 58,
+      "height": 57
     },
-    "answer": "test_text_scale_0_20241009T150042.png"
+    "answer": "test_text_scale_0.png"
   },
   {
     "time": 3000,
     "rect": {
-      "x": 77,
+      "x": 78,
       "y": 62,
-      "width": 196,
-      "height": 181
+      "width": 181,
+      "height": 180
     },
-    "answer": "test_text_scale_1_20241009T150045.png"
+    "answer": "test_text_scale_1.png"
   }
 ]

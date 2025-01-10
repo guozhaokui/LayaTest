@@ -2,11 +2,11 @@
   {
     "time": 300,
     "rect": {
-      "x": 52,
-      "y": 45,
-      "width": 504,
-      "height": 359
+      "x": 51,
+      "y": 39,
+      "width": 519,
+      "height": 363
     },
-    "answer": "test_blur_0_20241024T031440.png"
+    "answer": "test_blur_0.png"
   }
 ]

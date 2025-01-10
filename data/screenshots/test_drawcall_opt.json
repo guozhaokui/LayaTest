@@ -1,12 +1,12 @@
 [
   {
-    "time": 1000,
+    "time": 300,
     "rect": {
-      "x": 64,
-      "y": 39,
-      "width": 559,
-      "height": 416
+      "x": 81,
+      "y": 65,
+      "width": 506,
+      "height": 355
     },
-    "answer": "test_drawcall_opt_0_20241009T145214.png"
+    "answer": "test_drawcall_opt_0.png"
   }
 ]

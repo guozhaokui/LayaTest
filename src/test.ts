@@ -1,11 +1,11 @@
 
 import { Laya } from "Laya";
 //import test from "./simple1"
-import { usewebgl } from "./utils/utils"
+import "./utils/utils_3_2"
+//import "./utils/utils_3_1"
 
 let testfile = window.location.search.substring(1);
 async function testf(){
-    usewebgl();
     (window as any).Laya=Laya;
     await import('./result');
     //@ts-ignore

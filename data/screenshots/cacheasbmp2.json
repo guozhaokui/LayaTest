@@ -2,21 +2,21 @@
   {
     "time": 300,
     "rect": {
-      "x": 62,
-      "y": 1,
-      "width": 738,
-      "height": 381
+      "x": 68,
+      "y": 3,
+      "width": 274,
+      "height": 216
     },
-    "answer": "cacheasbmp2_0_20241009T153030.png"
+    "answer": "cacheasbmp2_0.png"
   },
   {
-    "time": 4000,
+    "time": 3000,
     "rect": {
-      "x": 62,
+      "x": 84,
       "y": 1,
-      "width": 738,
-      "height": 381
+      "width": 243,
+      "height": 236
     },
-    "answer": "cacheasbmp2_1_20241009T153033.png"
+    "answer": "cacheasbmp2_1.png"
   }
 ]

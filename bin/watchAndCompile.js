@@ -3,6 +3,7 @@ const fs = require('fs');
 const chokidar = require('chokidar');
 const ts = require('typescript');
 const WebSocket = require('ws');
+const {enginePath } = require('./engineCfg')
 
 //
 var clients;
@@ -22,10 +23,11 @@ function watchAndCompile(srcDir, outDir) {
     const watcher = chokidar.watch(srcDir, {
         ignored: /(^|[\/\\])\../,
         persistent: true,
-        awaitWriteFinish: {
-            stabilityThreshold: 2000,
-            pollInterval: 100
-        },
+        awaitWriteFinish:false, //默认是true，会等待文件写入完成，为了加相应速度，不要了
+        //awaitWriteFinish: {
+        //    stabilityThreshold: 200,    //防抖，避免某些编辑器的写入触发多次改变
+        //    pollInterval: 100
+        //},
         usePolling: false, // 设置为 true 如果需要使用轮询模式
         interval: 100, // 轮询间隔，仅在 usePolling 为 true 时使用        
     });
@@ -69,7 +71,7 @@ function watchAndCompile(srcDir, outDir) {
 function findCorrespondingTsFile(jsFilePath) {
     if(path.extname(jsFilePath)!=='.js')
         return null;
-    console.log(`查找${jsFilePath}的源文件`)
+    //console.log(`查找${jsFilePath}的源文件`)
     const possibleTsPath = jsFilePath.replace('.js', '.ts');
     const srcPath = path.join(__dirname, layaSrc);
 
@@ -165,7 +167,7 @@ async function compileTestDir() {
     console.log('Test directory compilation completed.');
 }
 
-var layaSrc = '../../LayaAir2/src'
+var layaSrc = `${enginePath}/src`
 var testSrc = '../src'
 
 /**

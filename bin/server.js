@@ -16,6 +16,7 @@ const http = require('http');
 const multer = require('multer');
 const { createCanvas, loadImage } = require('canvas');
 const {compileTestDir,layaSrc,findCorrespondingTsFile,compileTypeScript,copyFile,startWatch} = require('./watchAndCompile')
+const {enginePath } = require('./engineCfg')
 
 const app = express();
 
@@ -46,7 +47,8 @@ app.post('/upload', upload.single('screenshot'), async (req, res) => {
     console.log('upload:',pageId,frame,testInfo,file)
 
     const timestamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0];
-    const fileName = `${pageId}_${frameNumber}_${timestamp}.png`;
+    //const fileName = `${pageId}_${frameNumber}_${timestamp}.png`;
+    const fileName = `${pageId}_${frameNumber}.png`;
     const filePath = path.join(__dirname, resultDir, fileName);
 
     // 加载图片
@@ -123,7 +125,7 @@ app.get('/test', async (req, res) => {
 
 app.use((req, res, next) => {
 	//如果是目录，但是不是以/结尾的，算文件，避免express返回301。因为遇到一个问题 SceneRenderManager.js所在目录有一个 SceneRenderManager 目录
-	console.log(req.path);
+	//console.log(req.path);
     let filePath = path.join(__dirname, req.path);
 	
     // 检查原始文件是否存在
@@ -177,28 +179,43 @@ app.use((req, res, next) => {
     next();
 });
 
+function sendLocalShaderFile(f,res){
+    return new Promise((resolve, reject) => {
+        if (!fs.existsSync(f)) {
+            resolve(false);
+            return;
+        }
+
+        fs.readFile(f, 'utf8', (err, data) => {
+            if (err) {
+                res.status(500).send(`Error reading file: ${err}`);
+                resolve(true);
+                return;
+            }
+
+            const jsContent = `export default ${JSON.stringify(data)};`;
+            res.type('application/javascript').send(jsContent);
+            resolve(true);
+        });
+    });
+}
 
 // 用于处理 .glsl 或 .fs 文件的中间件
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
     const fileTypes = ['.glsl','.vs', '.fs'];
     const extension = path.extname(req.path).toLowerCase();
 
     if (fileTypes.includes(extension)) {
-        const filePath = path.join(__dirname, req.path);
-        if (fs.existsSync(filePath)) {
-            fs.readFile(filePath, 'utf8', (err, data) => {
-                if (err) {
-                    res.status(500).send(`Error reading file: ${err}`);
-                    return;
-                }
-
-                // 创建导出字符串的js文件内容
-                const jsContent = `export default ${JSON.stringify(data)};`;
-                res.type('application/javascript').send(jsContent);
-            });
-        } else {
+        let filePath = path.join(__dirname, req.path);
+        let handled = await sendLocalShaderFile(filePath, res);
+        if (!handled) {
+            // 如果不存在，直接去源码中查找
+            //  /tsc/layaAir/laya/webgl/shader/d2/files/primitive.ps.glsl
+            filePath = path.join(__dirname, req.path.replace('/tsc',`${enginePath}/src`));
             // 如果文件不存在，则继续请求流程
-            next();
+            handled = await sendLocalShaderFile(filePath, res);
+            if(!handled)
+                next();
         }
     } else {
         // 如果不是请求.glsl或.fs文件，继续请求流程
@@ -219,7 +236,7 @@ app.use((req, res, next) => {
 // 使用express的静态文件中间件
 app.use(express.static(__dirname));
 // 为了避免拷贝文件，引擎的bin目录也是可以使用的
-app.use(express.static(path.join(__dirname, '../../LayaAir2/bin')));
+app.use(express.static(path.join(__dirname, `${enginePath}/bin`)));
 app.use('/src',express.static(path.join(__dirname, layaSrc)));
 
 // 启动服务器

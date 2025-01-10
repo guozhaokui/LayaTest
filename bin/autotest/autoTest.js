@@ -1,4 +1,3 @@
-
 import puppeteer  from 'puppeteer-core';
 import {Launcher} from 'chrome-launcher';
 import looksSame from 'looks-same';
@@ -19,8 +18,42 @@ let errPath =path.join(__dirname,'error');
 fs.mkdirSync(errPath, { recursive: true });
 fs.rmdirSync(errPath,{recursive:true})
 
-const chromePath = Launcher.getFirstInstallation();
-console.log('发现chrome:',chromePath);
+// 添加配置文件路径
+const configPath = path.join(__dirname, 'chrome-config.json');
+
+// 获取 Chrome 路径的函数
+function getChromeExecutablePath() {
+    try {
+        // 尝试读取配置文件
+        if (fs.existsSync(configPath)) {
+            const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+            // 验证保存的路径是否仍然有效
+            if (fs.existsSync(config.chromePath)) {
+                //console.log('使用缓存的 Chrome 路径:', config.chromePath);
+                return config.chromePath;
+            }
+        }
+    } catch (error) {
+        console.error('读取配置文件失败:', error);
+    }
+
+    // 如果配置文件不存在或路径无效，重新查找 Chrome
+    const chromePath = Launcher.getFirstInstallation();
+    //console.log('发现新的 Chrome 路径:', chromePath);
+    
+    // 保存新路径到配置文件
+    try {
+        fs.writeFileSync(configPath, JSON.stringify({ chromePath }, null, 2));
+    } catch (error) {
+        console.error('保存配置文件失败:', error);
+    }
+
+    return chromePath;
+}
+
+// 替换原来的 Chrome 路径获取代码
+const chromePath = getChromeExecutablePath();
+console.log('使用 Chrome:', chromePath);
 
 /**
  * 

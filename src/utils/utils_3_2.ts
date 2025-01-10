@@ -9,7 +9,7 @@ import { Laya3DRender } from "laya/d3/RenderObjs/Laya3DRender";
 import { LayaGL } from "laya/layagl/LayaGL";
 
 
-export function usewebgl(){
+function usewebgl(){
     LayaGL.render2DRenderPassFactory = new WebGLRender2DProcess()
     LayaGL.unitRenderModuleDataFactory = new WebUnitRenderModuleDataFactory();
     LayaGL.renderDeviceFactory = new WebGLRenderDeviceFactory();
@@ -19,3 +19,5 @@ export function usewebgl(){
     LayaGL.renderOBJCreate = new WebGLRenderEngineFactory();
 
 }
+
+usewebgl();

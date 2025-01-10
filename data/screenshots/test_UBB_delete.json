@@ -1,12 +1,22 @@
 [
   {
-    "time": 2500,
+    "time": 300,
     "rect": {
-      "x": 90,
-      "y": 187,
-      "width": 243,
-      "height": 79
+      "x": 85,
+      "y": 183,
+      "width": 251,
+      "height": 87
     },
-    "answer": "test_UBB_delete_0_20241012T085706.png"
+    "answer": "test_UBB_delete_0.png"
+  },
+  {
+    "time": 3000,
+    "rect": {
+      "x": 83,
+      "y": 176,
+      "width": 246,
+      "height": 105
+    },
+    "answer": "test_UBB_delete_1.png"
   }
 ]
