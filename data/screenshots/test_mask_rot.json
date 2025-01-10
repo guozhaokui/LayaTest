@@ -1,0 +1,12 @@
+[
+  {
+    "time": 300,
+    "rect": {
+      "x": 170,
+      "y": 176,
+      "width": 148,
+      "height": 159
+    },
+    "answer": "test_mask_rot_0.png"
+  }
+]

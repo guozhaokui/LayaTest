@@ -3,101 +3,75 @@ import "laya/ModuleDef";
 import { Laya } from "Laya";
 import { Camera } from "laya/d3/core/Camera";
 import { DirectionLightCom } from "laya/d3/core/light/DirectionLightCom";
-import { BlinnPhongMaterial } from "laya/d3/core/material/BlinnPhongMaterial";
-import { MeshFilter } from "laya/d3/core/MeshFilter";
-import { MeshRenderer } from "laya/d3/core/MeshRenderer";
 import { Scene3D } from "laya/d3/core/scene/Scene3D";
 import { Sprite3D } from "laya/d3/core/Sprite3D";
-import { PrimitiveMesh } from "laya/d3/resource/models/PrimitiveMesh";
 import { Stage } from "laya/display/Stage";
 import { IK_Chain } from "laya/IK/IK_Chain";
+import { IK_FixConstraint } from "laya/IK/IK_Constraint";
 import { IK_Joint } from "laya/IK/IK_Joint";
+import { IK_Target } from "laya/IK/IK_Pose1";
+import { IK_System } from "laya/IK/IK_System";
+import { ClsInst } from "laya/IK/IK_Utils";
 import { Color } from "laya/maths/Color";
 import { Matrix4x4 } from "laya/maths/Matrix4x4";
 import { Quaternion } from "laya/maths/Quaternion";
 import { Vector3 } from "laya/maths/Vector3";
-import { Mesh } from "laya/d3/resource/models/Mesh";
-import { IK_Target } from "laya/IK/IK_Pose1";
-import { ClsInst, rotationTo } from "laya/IK/IK_Utils";
-import { IK_AngleLimit, IK_HingeConstraint } from "laya/IK/IK_Constraint";
-import { IK_System } from "laya/IK/IK_System";
 import { CameraController1 } from "../../utils/CameraController1";
 
-function createMeshSprite(mesh:Mesh,color:Color){
-    let sp3 = new Sprite3D();
-    let mf = sp3.addComponent(MeshFilter);
-    mf.sharedMesh = mesh;
-    let r = sp3.addComponent(MeshRenderer)
-    let mtl = new BlinnPhongMaterial();
-    r.material = mtl;
-    mtl.albedoColor = color;
-    return sp3;
-}
 
 class IKDemo {
     private scene: Scene3D;
     private camera: Camera;
     private iksys:IK_System;
     private chain:IK_Chain;
-    private target: Sprite3D;
     private targetPose = new IK_Target(new Vector3(), new Quaternion())
 
     constructor(scene:Scene3D, camera:Camera) {
         this.scene = scene;
+        this.camera=camera;
+
         this.iksys = new IK_System(scene);
         this.iksys.showDbg=true;
-        this.camera=camera;
-        this.createIKChain();
-        this.target = createMeshSprite(PrimitiveMesh.createSphere(0.1),new Color(1,0,0,1));
-        scene.addChild(this.target);
-        this.iksys.showDbg=true;
+        let chain = this.createIKChain(3);
+        //设置约束
+        //chain.joints[2].angleLimit = new IK_AngleLimit( new Vector3(-Math.PI, 0,-Math.PI), new Vector3(Math.PI, 0,Math.PI))
+        //chain.joints[3].angleLimit = new IK_HingeConstraint(new Vector3(1,0,0),null,-Math.PI/4, Math.PI/4, true);
+        chain.joints[0].angleLimit = new IK_FixConstraint();
+        chain.joints[1].angleLimit = new IK_FixConstraint();
+        chain.joints[2].angleLimit = new IK_FixConstraint();
 
-        // let O = createMeshSprite(PrimitiveMesh.createSphere(0.2),new Color(0,0,0,1));
-        // scene.addChild(O);
 
         Laya.timer.frameLoop(1, this, this.onUpdate);
     }
 
-    private createIKChain(): void {
+    private createIKChain(n:number) {
         let chain =this.chain= new IK_Chain();
         this.iksys.addChain(chain);
 
-        const numJoints = 5;
         const jointLength = 1;
 
-        let r1 = new Quaternion();
-        rotationTo(new Vector3(0,1,0), new Vector3(0,0,1), r1);
-        for (let i = 0; i < numJoints; i++) {
+        for (let i = 0; i < n; i++) {
             const position = new Vector3(0, i * jointLength, 0);
             const joint = new IK_Joint();
             joint.name = ''+i;
             chain.addJoint(joint, position, true);
         }
-        chain.setEndEffector(numJoints-1)
+        chain.setEndEffector(n-1)
         this.chain.target = this.targetPose;
         this.iksys.buildDbgModel();
-
-        //设置约束
-        //chain.joints[2].angleLimit = new IK_AngleLimit( new Vector3(-Math.PI, 0,-Math.PI), new Vector3(Math.PI, 0,Math.PI))
-        chain.joints[3].angleLimit = new IK_HingeConstraint(new Vector3(1,0,0),null,-Math.PI/4, Math.PI/4, true);
+        return chain;
     }
 
     private onUpdate(): void {
         // Move target
         const time = Laya.timer.currTimer * 0.0001;
-        let targetPos = this.target.transform.position;
-        targetPos.setValue(
-            Math.sin(time) * 2,
-            Math.cos(time * 0.5) * 3 ,
-            0//Math.cos(time * 0.5) * 3
-        );
-        targetPos.setValue(-2,0,0);
-        //this.targetPose.pos = this.target.transform.position.clone();
-        //DEBUG
-        //this.targetPose.pos = new Vector3(0,2,-3);
-        //targetPos.setValue(3,3,0)
-
-        //this.target.transform.position = targetPos;
+        let targetPos = this.targetPose.pos;
+        // targetPos.setValue(
+        //     Math.sin(time) * 2,
+        //     Math.cos(time * 0.5) * 3 ,
+        //     0//Math.cos(time * 0.5) * 3
+        // );
+        // targetPos.setValue(-2,0,0);
         
         this.iksys.onUpdate();
     }
