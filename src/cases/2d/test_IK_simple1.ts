@@ -78,7 +78,7 @@ class IKDemo {
             joint.angleLimit = new IK_AngleLimit( new Vector3(-Math.PI, 0,0), new Vector3(Math.PI, 0,0))
             chain.addJoint(joint, position, true);
             if(i==1){
-                joint.angleLimit = new IK_HingeConstraint(new Vector3(1,0,0),null,-Math.PI/4, Math.PI/4, true);
+                joint.angleLimit = new IK_HingeConstraint('x',-Math.PI/4, Math.PI/4);
             }else if(i==0){
                 joint.angleLimit = new IK_FixConstraint();
             }

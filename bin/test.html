@@ -54,6 +54,7 @@
                 let refresh = true;
                 try{
                     // 动态import只能是绝对路径，无法应用importmap
+                    // 只动态处理引擎部分，测试部分会直接刷新，下面的resolve会异常
                     const moduleUrl = import.meta.resolve(cleanPath);
                     console.log('解析后的URL:', moduleUrl);        
                     if(window.curexp && window.curexp.onfilechange){
