@@ -37,6 +37,8 @@ import { RenderState } from "laya/RenderDriver/RenderModuleData/Design/RenderSta
 import { IK_Comp } from "laya/IK/IK_Comp";
 import { IK_Target } from "laya/IK/IK_Pose1";
 import { IK_AngleLimit, IK_HingeConstraint } from "laya/IK/IK_Constraint";
+import { IK_Chain } from "laya/IK/IK_Chain";
+import { IK_Joint } from "laya/IK/IK_Joint";
 
 MeshReader; //MeshLoader.v3d 赋值
 
@@ -98,9 +100,9 @@ async function test(){
     visualSp.maxLineCount=1000;
     let mtl = visualSp._render.material;
     mtl.depthTest= RenderState.DEPTHTEST_ALWAYS;
-    visualSp.addLine(new Vector3, new Vector3(100,0,0), Color.RED,Color.RED);
-    visualSp.addLine(new Vector3, new Vector3(0,100,0), Color.GREEN,Color.GREEN);
-    visualSp.addLine(new Vector3, new Vector3(0,0,100), Color.BLUE,Color.BLUE);
+    // visualSp.addLine(new Vector3, new Vector3(100,0,0), Color.RED,Color.RED);
+    // visualSp.addLine(new Vector3, new Vector3(0,100,0), Color.GREEN,Color.GREEN);
+    // visualSp.addLine(new Vector3, new Vector3(0,0,100), Color.BLUE,Color.BLUE);
     scene.addChild(visualSp);
     }
 
@@ -116,7 +118,7 @@ async function test(){
         let length = (sp as any).boneLength ||1;
         let color = null;
         let bone = createBoneModel(length, color);
-        sp.addChild(bone);
+        //sp.addChild(bone);
     }
     
     // 调整模型位置和缩放
@@ -145,7 +147,7 @@ async function test(){
     animatorLayer.addState(state);
 
     // 播放动画
-    animator.play("move");
+    //animator.play("move");
     //state.speed=0;
     //animator.getControllerLayer(0).getCurrentPlayState()
     //animatorLayer.getCurrentPlayState().normalizedTime=0.1;
@@ -156,8 +158,8 @@ async function test(){
     let  ikcomp = mmdsp.addComponent(IK_Comp)
     ikcomp.setJointConstraint({
         //脚踝
-        "左足首":new IK_HingeConstraint('x',0,120*Math.PI/180),
-        "右足首":new IK_HingeConstraint('x',0,120*Math.PI/180),
+        "左足首":new IK_HingeConstraint('x',-120*Math.PI/180,0*Math.PI/180),
+        "右足首":new IK_HingeConstraint('x',-120*Math.PI/180,0*Math.PI/180),
         //膝
         "左ひざ":new IK_HingeConstraint('x',0,120*Math.PI/180),
         "右ひざ":new IK_HingeConstraint('x',0,120*Math.PI/180),
@@ -167,15 +169,37 @@ async function test(){
     //左つま先,左足首,左ひざ,左足
     //左脚踝
     //chain.appendEndEffector(new Vector3(0,1.5,0))
-    ikcomp.setTarget(ikcomp.addChainByBoneName('左足首',3,true), new IK_Target( mmdsp.getBone('左足ＩＫ') ));        
-    //ikcomp.setTarget(ikcomp.addChainByBoneName('右足首',3,true), new IK_Target( mmdsp.getBone('右足ＩＫ') ));        
+    let chain1:IK_Chain;
+//    ikcomp.setTarget(ikcomp.addChainByBoneName('左足首',3,true), new IK_Target( mmdsp.getBone('左足ＩＫ') ));        
+    let chain2:IK_Chain;
+    ikcomp.setTarget(chain2 = ikcomp.addChainByBoneName('右足首',3,true), new IK_Target( mmdsp.getBone('右足ＩＫ') ));        
+    //chain2.appendEndEffector(new Vector3(0,0,1))
+    let knee = chain2.getJoint('右ひざ')
+    if(knee) knee.onCollinear = (joint:IK_Joint,i:number)=>{
+        let tmpadj = new Quaternion();
+        Quaternion.createFromAxisAngle(new Vector3(1,0,0),90*Math.PI/180,tmpadj);
+        //Quaternion.multiply(joint.rotationQuat,tmpadj, joint.rotationQuat);
+        //chain2.rotateJoint(i,tmpadj);
+    }
+
 
     //根据骨骼名称添加约束
 
     //左つま先ＩＫ  足尖
-    ikcomp.setTarget(ikcomp.addChainByBoneName('左つま先',2,true), new IK_Target( mmdsp.getBone('左つま先ＩＫ') ));
-    //ikcomp.setTarget(ikcomp.addChainByBoneName('右つま先',2,true), new IK_Target( mmdsp.getBone('右つま先ＩＫ') ));
+    //ikcomp.setTarget(ikcomp.addChainByBoneName('左つま先',2,true), new IK_Target( mmdsp.getBone('左つま先ＩＫ') ));
+    ikcomp.setTarget(ikcomp.addChainByBoneName('右つま先',2,true), new IK_Target( mmdsp.getBone('右つま先ＩＫ') ));
 
+    let sp3 = new Sprite3D();
+{
+    sp3.transform.position = new Vector3(-1,-1,1)
+    let mf = sp3.addComponent(MeshFilter);
+    mf.sharedMesh = PrimitiveMesh.createBox(2,2,3);
+    let r = sp3.addComponent(MeshRenderer)
+    let mtl = new BlinnPhongMaterial();
+    r.material = mtl;
+    mtl.albedoColor = Color.GRAY;
+    scene.addChild(sp3);
+}
 
     new mmd_rtdebug(mmdsp);
     stage.on(Event.MOUSE_DOWN,(e:Event)=>{
@@ -193,6 +217,23 @@ async function test(){
             console.log(b.name)
         }
     })
+
+    let frm = 0;
+    let ik = mmdsp.getBone('右足ＩＫ')
+    let iktoe = mmdsp.getBone('右つま先ＩＫ')
+    function renderloop(){
+        let pos = 4*Math.sin(frm++/60);
+        sp3.transform.position.y = pos;
+        sp3.transform.position = sp3.transform.position;
+        ik.transform.position.y = pos+1+1;
+        ik.transform.position = ik.transform.position;
+
+        iktoe.transform.position.y = pos+1;
+        iktoe.transform.position = iktoe.transform.position;
+
+        requestAnimationFrame(renderloop);
+    }
+    requestAnimationFrame(renderloop)    
 
 }
 
