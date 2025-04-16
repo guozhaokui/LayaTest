@@ -11,7 +11,7 @@ import { Laya } from "Laya";
 import { Shader3D } from "laya/RenderEngine/RenderShader/Shader3D";
 import { Stage } from "laya/display/Stage";
 import { RenderSprite } from "laya/renders/RenderSprite";
-import { Stat } from "laya/utils/Stat";
+//import { Stat } from "laya/utils/Stat";
 
 //HierarchyLoader和MaterialLoader等是通过前面的import完成的
 let packurl = 'sample-resource/2d';
@@ -22,7 +22,7 @@ async function test(){
     Laya.stage.scaleMode = Stage.SCALE_FULL;
     Laya.stage.screenMode = Stage.SCREEN_NONE;
     Shader3D.debugMode = true;
-    Stat.show();
+    //Stat.show();
 
     RenderSprite;
     await Laya.loader.loadPackage(packurl);

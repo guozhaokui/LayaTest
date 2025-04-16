@@ -2,12 +2,12 @@ import { Config } from "Config";
 import { Laya } from "Laya";
 
 //如果要canvas.toBlob必须保留buffer，否则会黑屏
-Config.preserveDrawingBuffer=true;
+// Config.preserveDrawingBuffer=true;  写在这里太晚了
 
-Laya.addInitCallback(()=>{
-    //这时候已经初始化完成，这个值不再能控制canvas的属性，但是设置为false可以保证能clear
-    Config.preserveDrawingBuffer=false;
-})
+// Laya.addInitCallback(()=>{
+//     //这时候已经初始化完成，这个值不再能控制canvas的属性，但是设置为false可以保证能clear
+//     Config.preserveDrawingBuffer=false;
+// })
 
 //为了避免循环引用，直接使用原生的事件
 let stx=0;

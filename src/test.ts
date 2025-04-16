@@ -7,7 +7,7 @@ import "./utils/utils_3_3"
 import { Config } from "Config";
 
 //如果要canvas.toBlob必须保留buffer，否则会黑屏
-Config.preserveDrawingBuffer=true;
+//Config.preserveDrawingBuffer=true;
 
 Laya.addInitCallback(()=>{
     //这时候已经初始化完成，这个值不再能控制canvas的属性，但是设置为false可以保证能clear
