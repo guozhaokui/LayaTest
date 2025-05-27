@@ -3,15 +3,13 @@ loadLib( "./jsLibs/bullet.js")
 import 'tsc/test/test.js'
 console.log('aaa')
 
-const socket = new WebSocket(`ws://${location.host}`);
+const socket = new WebSocket(`ws://localhost:4000`);
 
-socket.addEventListener('open', (event) => {
-    //console.log('Connected to WebSocket server');
-});
-
-console.log('aaa11')
-
-socket.addEventListener('message', async(event) => {
+socket.onopen=()=>{
+    console.log('Connected to WebSocket server');
+}
+//socket.addEventListener('message', async(event) => {
+socket.onmessage=async (event)=>{
     const data = JSON.parse(event.data);
     if (data.type === 'fileChanged') {
         console.log('File changed:', data.file);
@@ -40,7 +38,7 @@ socket.addEventListener('message', async(event) => {
             location.reload();
         }
     }
-});
+}
 
 function isRelevantFile(file) {
     // 这里的逻辑需要根据你的项目结构来定制
@@ -48,4 +46,3 @@ function isRelevantFile(file) {
     return true; // 这里简单地总是返回 true，即任何文件变化都刷新
 }
 
-console.log('aaa3')

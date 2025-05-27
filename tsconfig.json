@@ -8,6 +8,7 @@
         "Config3D": ["../LayaAir2/src/layaAir/Config3D"],
         "ILaya3D": ["../LayaAir2/src/layaAir/ILaya3D"],
         "Laya": ["../LayaAir2/src/layaAir/Laya"],
+        "LayaEnv": ["../LayaAir2/src/layaAir/LayaEnv"],
         "Config": ["../LayaAir2/src/layaAir/Config"],
         "ILaya": ["../LayaAir2/src/layaAir/ILaya"]
       },

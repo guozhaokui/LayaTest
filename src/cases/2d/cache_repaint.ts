@@ -13,7 +13,6 @@ import { Sprite } from "laya/display/Sprite";
 import { Stage } from "laya/display/Stage";
 
 //HierarchyLoader和MaterialLoader等是通过前面的import完成的
-usewebgl();
 let packurl = 'sample-resource/2d'
 async function test(){
     //初始化引擎

@@ -16,7 +16,6 @@ import { Sprite } from "laya/display/Sprite";
 //HierarchyLoader和MaterialLoader等是通过前面的import完成的
 (window as any).testtime=10000; //多等一会儿,等待加载资源完毕
 
-usewebgl();
 let packurl = 'sample-resource/2d'
 async function test(){
     //初始化引擎
