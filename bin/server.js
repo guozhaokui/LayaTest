@@ -17,12 +17,20 @@ const multer = require('multer');
 const { createCanvas, loadImage } = require('canvas');
 const {compileTestDir,layaSrc,findCorrespondingTsFile,compileTypeScript,copyFile,startWatch} = require('./watchAndCompile')
 const {enginePath } = require('./engineCfg')
+const https = require('https');
 
 const app = express();
 
 const upload = multer({ dest: 'uploads/' });
 
-const server = http.createServer(app);
+// 加载 SSL 证书和私钥
+const options = {
+    key: fs.readFileSync('ssl/key.pem'),
+    cert: fs.readFileSync('ssl/cert.pem')
+};
+
+// 使用 https 模块创建服务器
+const server = https.createServer(options, app);
 const wss = new WebSocket.Server({ server });
 
 // 存储所有连接的客户端
