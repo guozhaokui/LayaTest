@@ -103,8 +103,10 @@ function compileTypeScript(filePath, outPath) {
         compilerOptions: {
             module: ts.ModuleKind.ESNext,
             target: ts.ScriptTarget.ES2017,
+            sourceMap: true,
             //removeComments: true,
         },
+        fileName: filePath,
     });
 
     const jsPath = outPath.replace('.ts', '.js');
@@ -114,6 +116,19 @@ function compileTypeScript(filePath, outPath) {
     fs.writeSync(fd, result.outputText);
     fs.fsyncSync(fd);
     fs.closeSync(fd);
+
+    // 写入 sourcemap 文件。并且是绝对路径
+    if (result.sourceMapText) {
+        const sourceMap = JSON.parse(result.sourceMapText);
+        //sourceMap.sourceRoot = 'file:///'
+        sourceMap.sources = [filePath];  //保存绝对路径。对chrome本身不太 友好，但是很方便vscode的调试
+        
+        fs.writeFileSync(outPath, result.outputText);
+        fs.writeFileSync(outPath + '.map', JSON.stringify(sourceMap));
+    }    
+    // if (result.sourceMapText) {
+    //     fs.writeFileSync(jsPath + '.map', result.sourceMapText);
+    // }    
     //fs.writeFileSync(jsPath, result.outputText);
     console.log(`编译到: ${path.relative(__dirname, jsPath)}`);
     return result.outputText;

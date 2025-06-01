@@ -453,12 +453,15 @@ function testComputeShader1() {
     let code = `
             @group(0) @binding(0) var<storage,read_write> data:array<f32>;
             @group(0) @binding(1) var readTex:texture_2d<f32>;
-            //@group(0) @binding(2) var writeTex:texture_2d<f32>;
+            @group(0) @binding(2) var writeTex:texture_storage_2d<rgba32float, write>;
             @compute @workgroup_size(1) fn computeDoubleMulData(
                 @builtin(global_invocation_id) id: vec3u
             ){
                 let i = id.x;
-                data[i] = data[i] * 2.0;
+                let coords = id.xy;
+                let n =  textureLoad(readTex, coords, 0);                
+                data[i] = data[i] * 2.0+n.x;
+                textureStore(writeTex,coords,vec4(1,1,1,1));
             }`
 
     let renderDevFactory = LayaGL.renderDeviceFactory;
@@ -467,8 +470,8 @@ function testComputeShader1() {
     let rtexID = Shader3D.propertyNameToID('readTex');
     let wtexID = Shader3D.propertyNameToID('writeTex');
     uniformCommandMap.addShaderUniform(propertyID, "data", ShaderDataType.DeviceBuffer);
-    uniformCommandMap.addShaderUniform(rtexID,'readTex',ShaderDataType.Texture2D);
-    //uniformCommandMap.addShaderUniform(wtexID,'writeTex', ShaderDataType.Texture2D);
+    uniformCommandMap.addShaderUniform(rtexID,'readTex',ShaderDataType.Texture2D_float);
+    uniformCommandMap.addShaderUniform(wtexID,'writeTex', ShaderDataType.Texture2DStorage);
 
     let computeshader = ComputeShader.createComputeShader("changeArray", code, [uniformCommandMap]);
     let shaderDefine = LayaGL.unitRenderModuleDataFactory.createDefineDatas();
@@ -482,8 +485,11 @@ function testComputeShader1() {
     strotageBuffer.setData(array, 0, 0, array.byteLength);
     shaderData.setDeviceBuffer(propertyID, strotageBuffer);
     shaderData.setTexture(rtexID,genNoiseTex());
-    let tex1 = new Texture2D(256,256,TextureFormat.R32G32B32A32,false,false);
-    //shaderData.setTexture(wtexID,tex1);
+    let tex1 = new Texture2D(256,256,TextureFormat.R32G32B32A32,{isStorage:true});
+    shaderData.setTexture(wtexID,tex1);
+
+    new Texture2D(256,256,TextureFormat.R32G32,{})
+    new Texture2D(256,256,TextureFormat.R16G16B16A16,{})
 
     let readStrotageBuffer = renderDevFactory.createDeviceBuffer(EDeviceBufferUsage.COPY_DST | EDeviceBufferUsage.MAP_READ);
     readStrotageBuffer.setDataLength(array.byteLength);

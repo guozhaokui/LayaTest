@@ -1,0 +1,20 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Launch Chrome against localhost",
+            "url": "https://192.168.50.186:4000/test.html?test_webgpu_ocean",
+            "webRoot": "${workspaceFolder}/",
+            //"sourceMapRenames": true,
+            //"trace": true,
+            //"sourceMapPathOverrides": {   //这个是基于map文件的sourceRoot和sources拼接的结果做替换的。现在保存了绝对路径，就不用了
+            //"WebGPUBindGroupCache.ts": "D:/work/LayaAir2/src/layaAir/laya/RenderDriver/WebGPUDriver/RenderDevice/WebGPUBindGroupCache.ts"
+            //}
+        }
+    ]
+}
