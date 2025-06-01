@@ -453,7 +453,7 @@ function testComputeShader1() {
     let code = `
             @group(0) @binding(0) var<storage,read_write> data:array<f32>;
             @group(0) @binding(1) var readTex:texture_2d<f32>;
-            @group(0) @binding(2) var writeTex:texture_storage_2d<rgba32float, write>;
+            @group(0) @binding(2) var writeTex:texture_storage_2d<rg32float, write>;
             @compute @workgroup_size(1) fn computeDoubleMulData(
                 @builtin(global_invocation_id) id: vec3u
             ){
@@ -471,7 +471,7 @@ function testComputeShader1() {
     let wtexID = Shader3D.propertyNameToID('writeTex');
     uniformCommandMap.addShaderUniform(propertyID, "data", ShaderDataType.DeviceBuffer);
     uniformCommandMap.addShaderUniform(rtexID,'readTex',ShaderDataType.Texture2D_float);
-    uniformCommandMap.addShaderUniform(wtexID,'writeTex', ShaderDataType.Texture2DStorage);
+    uniformCommandMap.addShaderUniform(wtexID,'writeTex', ShaderDataType.Texture2DStorage,{textureFormat:'rg32float'});
 
     let computeshader = ComputeShader.createComputeShader("changeArray", code, [uniformCommandMap]);
     let shaderDefine = LayaGL.unitRenderModuleDataFactory.createDefineDatas();
@@ -485,7 +485,7 @@ function testComputeShader1() {
     strotageBuffer.setData(array, 0, 0, array.byteLength);
     shaderData.setDeviceBuffer(propertyID, strotageBuffer);
     shaderData.setTexture(rtexID,genNoiseTex());
-    let tex1 = new Texture2D(256,256,TextureFormat.R32G32B32A32,{isStorage:true});
+    let tex1 = new Texture2D(256,256,TextureFormat.R32G32,{isStorage:true});
     shaderData.setTexture(wtexID,tex1);
 
     new Texture2D(256,256,TextureFormat.R32G32,{})
@@ -521,7 +521,7 @@ async function test() {
     await Laya.init(0, 0);
     Laya.stage.scaleMode = Stage.SCALE_FULL;
     Laya.stage.screenMode = Stage.SCREEN_NONE;
-
+/*
     let sp = new Sprite();
     sp.graphics.clipRect(0, 0, 150, 150);
     sp.graphics.drawPoly(0, 0, [0, 0, 100, 0, 100, 100], 'green', 'yellow', 2)
@@ -575,7 +575,7 @@ async function test() {
 
     // 创建立方体
     scene.addChild(createMeshSprite(PrimitiveMesh.createSphere(0.1),new Color(1,0,0,1)));
-
+*/
     testComputeShader1();
     testOcean();
 
