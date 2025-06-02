@@ -454,13 +454,19 @@ function testComputeShader1() {
             @group(0) @binding(0) var<storage,read_write> data:array<f32>;
             @group(0) @binding(1) var readTex:texture_2d<f32>;
             @group(0) @binding(2) var writeTex:texture_storage_2d<rg32float, write>;
+            struct Params {
+                Size : u32,
+                LengthScale : f32,
+            };
+            @group(0) @binding(3) var<uniform> params : Params;
+
             @compute @workgroup_size(1) fn computeDoubleMulData(
                 @builtin(global_invocation_id) id: vec3u
             ){
                 let i = id.x;
                 let coords = id.xy;
                 let n =  textureLoad(readTex, coords, 0);                
-                data[i] = data[i] * 2.0+n.x;
+                data[i] = data[i] * 2.0+n.x+params.LengthScale;
                 textureStore(writeTex,coords,vec4(1,1,1,1));
             }`
 
@@ -469,22 +475,35 @@ function testComputeShader1() {
     let propertyID = Shader3D.propertyNameToID("data");
     let rtexID = Shader3D.propertyNameToID('readTex');
     let wtexID = Shader3D.propertyNameToID('writeTex');
+    let paramsID = Shader3D.propertyNameToID('params');
     uniformCommandMap.addShaderUniform(propertyID, "data", ShaderDataType.DeviceBuffer);
     uniformCommandMap.addShaderUniform(rtexID,'readTex',ShaderDataType.Texture2D_float);
     uniformCommandMap.addShaderUniform(wtexID,'writeTex', ShaderDataType.Texture2DStorage,{textureFormat:'rg32float'});
+    uniformCommandMap.addShaderUniform(paramsID,'params', ShaderDataType.DeviceBuffer);
 
     let computeshader = ComputeShader.createComputeShader("changeArray", code, [uniformCommandMap]);
     let shaderDefine = LayaGL.unitRenderModuleDataFactory.createDefineDatas();
 
     //创建ShaderData和StorageBuffer
     let shaderData = renderDevFactory.createShaderData();
-    let strotageBuffer = renderDevFactory.createDeviceBuffer(EDeviceBufferUsage.STORAGE | EDeviceBufferUsage.COPY_DST | EDeviceBufferUsage.COPY_SRC);
 
+    let strotageBuffer = renderDevFactory.createDeviceBuffer(EDeviceBufferUsage.STORAGE | EDeviceBufferUsage.COPY_DST | EDeviceBufferUsage.COPY_SRC);
     let array = new Float32Array([1, 3, 5]);
     strotageBuffer.setDataLength(array.byteLength);
     strotageBuffer.setData(array, 0, 0, array.byteLength);
     shaderData.setDeviceBuffer(propertyID, strotageBuffer);
-    shaderData.setTexture(rtexID,genNoiseTex());
+
+    let paramBuffer = renderDevFactory.createDeviceBuffer(EDeviceBufferUsage.UNIFORM | EDeviceBufferUsage.COPY_DST | EDeviceBufferUsage.COPY_SRC);
+    let paramBuffValue = new Float32Array(2);
+    let dv = new DataView(paramBuffValue.buffer);
+    dv.setUint32(0,1,true);
+    dv.setFloat32(4,2.2,true);
+    paramBuffer.setDataLength(paramBuffValue.byteLength);
+    paramBuffer.setData(paramBuffValue, 0, 0, paramBuffValue.byteLength);
+    shaderData.setDeviceBuffer(paramsID, paramBuffer);
+
+    let noiseTex = genNoiseTex();
+    shaderData.setTexture(rtexID,noiseTex);
     let tex1 = new Texture2D(256,256,TextureFormat.R32G32,{isStorage:true});
     shaderData.setTexture(wtexID,tex1);
 
@@ -505,6 +524,219 @@ function testComputeShader1() {
     readStrotageBuffer.readData(array.buffer, 0, 0, array.byteLength).then(() => {
         console.log(array);
     })
+    return tex1;
+}
+
+
+// async function testComputeShader2() {
+//     //直接用device好像会破坏引擎。放弃。
+//     let device:GPUDevice = WebGPURenderEngine._instance.getDevice();
+//     //创建ComputeShader
+//     //texture_storage_2d<rg32float, write>;
+//     let code = `
+//             @group(0) @binding(0) var<storage,read_write> data:array<f32>;
+//             //@group(0) @binding(1) var readTex:texture_2d<f32>;
+//             //@group(0) @binding(2) var writeTex:texture_storage_2d<rg32float, write>;
+//             struct Params {
+//                 Size : u32,
+//                 LengthScale : f32,
+//             };
+//             //@group(0) @binding(3) var<uniform> params : Params;
+
+//             @compute @workgroup_size(1) fn computeDoubleMulData(
+//                 @builtin(global_invocation_id) id: vec3u
+//             ){
+//                 let i = id.x;
+//                 let coords = id.xy;
+//                 //let n =  textureLoad(readTex, coords, 0);                
+//                 data[i] = data[i] * 2.0;//+n.x;
+//                 //textureStore(writeTex,coords,vec4(1,1,1,1));
+//             }`
+
+//     // let layout = device.createPipelineLayout({
+//     //     label:"pipelineL1",
+//     //     bindGroupLayouts:[]
+//     // });
+//     let cs_pipeline = device.createComputePipeline({
+//         layout:'auto',
+//         compute: {
+//             module: device.createShaderModule({code:code}), 
+//             entryPoint:'computeDoubleMulData'
+//         }
+//     });
+
+//     //输入数据
+//     const input = new Float32Array([1, 3, 5]);
+//     const workBuffer = device.createBuffer({
+//         label: 'work buffer',
+//         size: input.byteLength,
+//         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
+//     });    
+//     device.queue.writeBuffer(workBuffer, 0, input);
+
+//     //贴图
+//     let noiseTex = genNoiseTex();
+//     noiseTex._texture.resource;
+
+//     // 创建结果缓冲区（用于读取结果）
+//     const resultBuffer = device.createBuffer({
+//         label: 'result buffer',
+//         size: input.byteLength,
+//         usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
+//     });    
+
+//     // const bindGroupLayout = device.createBindGroupLayout({
+//     //     label: 'bindGroupLayout for work buffer',
+//     //     entries: [{
+//     //         binding: 0,
+//     //         visibility: GPUShaderStage.COMPUTE,
+//     //         buffer: { type: 'storage' }
+//     //     }],
+//     // });
+
+//     // 7. 创建绑定组
+//     const bindGroup = device.createBindGroup({
+//         label: 'bindGroup for work buffer',
+//         layout: cs_pipeline.getBindGroupLayout(0),
+//         entries: [{
+//             binding: 0,
+//             resource: { buffer: workBuffer }
+//         }],
+//     });    
+
+//     const commandEncoder = device.createCommandEncoder();
+//     const computePass = commandEncoder.beginComputePass();
+
+//     computePass.setPipeline(cs_pipeline);
+//     computePass.setBindGroup(0, bindGroup);
+//     computePass.dispatchWorkgroups(3,1,1);
+//     computePass.end();    
+//     // 复制结果到可读缓冲区
+//     commandEncoder.copyBufferToBuffer(workBuffer, 0, resultBuffer, 0, resultBuffer.size);    
+//     // 提交
+//     device.queue.submit([commandEncoder.finish()]);
+
+//     // 10. 读取结果
+//     await resultBuffer.mapAsync(GPUMapMode.READ);    
+//     const result = new Float32Array(resultBuffer.getMappedRange());
+//     console.log('输出:', Array.from(result));
+//     // 清理
+//     resultBuffer.unmap();
+
+//     let tex1 = new Texture2D(256,256,TextureFormat.R32G32,{isStorage:true});
+//     return tex1;
+
+//     /*
+//     const uniformBuffer = device.createBuffer({
+//         size: 24, // 6个float32 = 24字节
+//         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+//     });    
+
+//     const uniformData = new Float32Array(6);
+//     uniformData[0] = 256;    // Size
+//     uniformData[1] = 1.0;    // LengthScale
+//     uniformData[2] = 0.9;    // CutoffHigh
+//     uniformData[3] = 0.1;    // CutoffLow
+//     uniformData[4] = 9.8;    // GravityAcceleration
+//     uniformData[5] = 10.0;   // Depth
+
+//     // 上传uniform数据
+//     device.queue.writeBuffer(uniformBuffer, 0, uniformData);
+
+//     let renderDevFactory = LayaGL.renderDeviceFactory;
+//     //uniformCommandMap.addShaderUniform(wtexID,'writeTex', ShaderDataType.Texture2DStorage,{textureFormat:'rg32float'});
+
+//     //创建ShaderData和StorageBuffer
+//     let shaderData = renderDevFactory.createShaderData();
+//     let strotageBuffer = renderDevFactory.createDeviceBuffer(EDeviceBufferUsage.STORAGE | EDeviceBufferUsage.COPY_DST | EDeviceBufferUsage.COPY_SRC);
+
+//     shaderData.setTexture(rtexID,noiseTex);
+//     let tex1 = new Texture2D(256,256,TextureFormat.R32G32,{isStorage:true});
+    
+//     shaderData.setTexture(wtexID,tex1);
+
+//     let readStrotageBuffer = renderDevFactory.createDeviceBuffer(EDeviceBufferUsage.COPY_DST | EDeviceBufferUsage.MAP_READ);
+//     readStrotageBuffer.setDataLength(array.byteLength);
+
+//     //创建ComputeCommandBuffer
+//     let commands = new ComputeCommandBuffer();
+
+//     let dispatchParams = new Vector3(array.length, 1, 1);
+//     commands.addDispatchCommand(computeshader, "computeDoubleMulData", shaderDefine, [shaderData], dispatchParams);
+//     commands.addBufferToBufferCommand(strotageBuffer, readStrotageBuffer, 0, 0, array.byteLength);
+//     commands.executeCMDs();
+
+//     readStrotageBuffer.readData(array.buffer, 0, 0, array.byteLength).then(() => {
+//         console.log(array);
+//     })
+//     return tex1;
+//     */
+// }
+
+
+function testComputeShader3() {
+    /*
+@group(0) @binding(1) var WavesData : texture_storage_2d<rgba32float, write>;
+@group(0) @binding(2) var H0K : texture_storage_2d<rg32float, write>;
+@group(0) @binding(4) var Noise : texture_2d<f32>;    
+@group(0) @binding(5) var<uniform> params : Params;
+@group(0) @binding(6) var<storage, read> spectrums : SpectrumParameters;
+    */
+    //创建ComputeShader
+    //texture_storage_2d<rg32float, write>;
+    let code = initialSpectrumCS;
+    let renderDevFactory = LayaGL.renderDeviceFactory;
+
+    let textureSize = 256;
+
+    let _initialSpectrum = new Texture2D(textureSize,textureSize,TextureFormat.R32G32B32A32,{isStorage:true});//h0
+
+    let _precomputedData = new Texture2D(textureSize,textureSize,TextureFormat.R32G32B32A32,{isStorage:true});//waesData
+    let _buffer = new Texture2D(textureSize,textureSize,TextureFormat.R32G32,{isStorage:true});//h0k
+
+    let _spectrumParameters = renderDevFactory.createDeviceBuffer(EDeviceBufferUsage.STORAGE | EDeviceBufferUsage.COPY_DST | EDeviceBufferUsage.COPY_SRC);
+    //TODO 赋值
+
+
+    let uniformCommandMap = renderDevFactory.createGlobalUniformMap("changeArray");
+    let propertyID = Shader3D.propertyNameToID("data");
+    let rtexID = Shader3D.propertyNameToID('readTex');
+    let wtexID = Shader3D.propertyNameToID('writeTex');
+    uniformCommandMap.addShaderUniform(propertyID, "data", ShaderDataType.DeviceBuffer);
+    uniformCommandMap.addShaderUniform(rtexID,'readTex',ShaderDataType.Texture2D_float);
+    uniformCommandMap.addShaderUniform(wtexID,'writeTex', ShaderDataType.Texture2DStorage,{textureFormat:'rg32float'});
+
+    let computeshader = ComputeShader.createComputeShader("changeArray", code, [uniformCommandMap]);
+    let shaderDefine = LayaGL.unitRenderModuleDataFactory.createDefineDatas();
+
+    //创建ShaderData和StorageBuffer
+    let shaderData = renderDevFactory.createShaderData();
+    let strotageBuffer = renderDevFactory.createDeviceBuffer(EDeviceBufferUsage.STORAGE | EDeviceBufferUsage.COPY_DST | EDeviceBufferUsage.COPY_SRC);
+
+    let array = new Float32Array([1, 3, 5]);
+    strotageBuffer.setDataLength(array.byteLength);
+    strotageBuffer.setData(array, 0, 0, array.byteLength);
+    shaderData.setDeviceBuffer(propertyID, strotageBuffer);
+    let noiseTex = genNoiseTex();
+    shaderData.setTexture(rtexID,noiseTex);
+    let tex1 = new Texture2D(256,256,TextureFormat.R32G32,{isStorage:true});
+    shaderData.setTexture(wtexID,tex1);
+
+    let readStrotageBuffer = renderDevFactory.createDeviceBuffer(EDeviceBufferUsage.COPY_DST | EDeviceBufferUsage.MAP_READ);
+    readStrotageBuffer.setDataLength(array.byteLength);
+
+    //创建ComputeCommandBuffer
+    let commands = new ComputeCommandBuffer();
+
+    let dispatchParams = new Vector3(array.length, 1, 1);
+    commands.addDispatchCommand(computeshader, "calculateInitialSpectrum", shaderDefine, [shaderData], dispatchParams);
+    commands.addBufferToBufferCommand(strotageBuffer, readStrotageBuffer, 0, 0, array.byteLength);
+    commands.executeCMDs();
+
+    readStrotageBuffer.readData(array.buffer, 0, 0, array.byteLength).then(() => {
+        console.log(array);
+    })
+    return tex1;
 }
 
 
@@ -521,13 +753,12 @@ async function test() {
     await Laya.init(0, 0);
     Laya.stage.scaleMode = Stage.SCALE_FULL;
     Laya.stage.screenMode = Stage.SCREEN_NONE;
-/*
     let sp = new Sprite();
     sp.graphics.clipRect(0, 0, 150, 150);
     sp.graphics.drawPoly(0, 0, [0, 0, 100, 0, 100, 100], 'green', 'yellow', 2)
     sp.pos(100, 100)
-    sp.cacheAs = 'normal'
-    Laya.stage.addChild(sp);
+    //sp.cacheAs = 'normal'
+    //Laya.stage.addChild(sp);
 
     let width = 256;
     let height=256;
@@ -537,7 +768,7 @@ async function test() {
     for(let y=0;y<height;y++){
         for(let x=0;x<width;x++){
             pixelData[idx++]=0xff;
-            pixelData[idx++]=0xff;
+            pixelData[idx++]=0x00;
             pixelData[idx++]=0xff;
             pixelData[idx++]=0xff;
 
@@ -550,10 +781,8 @@ async function test() {
     imgMask.width = 200;  // 设置合适的显示大小
     imgMask.height = 200;
     imgMask.pos(220, 10);
-    let maskTexture =new Texture(maskTexture2d); 
-    imgMask.source = maskTexture;
+    imgMask.source = new Texture(maskTexture2d);
     Laya.stage.addChild(imgMask);
-
 
 
 
@@ -575,8 +804,8 @@ async function test() {
 
     // 创建立方体
     scene.addChild(createMeshSprite(PrimitiveMesh.createSphere(0.1),new Color(1,0,0,1)));
-*/
-    testComputeShader1();
+    let t1 = testComputeShader1();
+    //imgMask.source = new Texture(t1);
     testOcean();
 
     function renderloop() {
