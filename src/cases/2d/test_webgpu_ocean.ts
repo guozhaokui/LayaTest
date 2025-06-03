@@ -32,6 +32,7 @@ import { Texture } from "laya/resource/Texture";
 import { Texture2D } from "laya/resource/Texture2D";
 import { TextureFormat } from "laya/RenderEngine/RenderEnum/TextureFormat";
 import { MyComputeShader } from "./webgpuOcean/MyComputeShader";
+import { Ocean } from "./webgpuOcean/ocean";
 
 function useWebGPU(){
     LayaGL.renderDeviceFactory = new WebGPURenderDeviceFactory();
@@ -547,7 +548,7 @@ function testComputeShader4() {
     let tex1 = new Texture2D(256,256,TextureFormat.R32G32,{isStorage:true});
     cs.setTexture('writeTex',tex1);
 
-    cs.dbgReadBuffer(strotageBuffer);
+    //cs.dbgReadBuffer(strotageBuffer);
     cs.dispatch(array.length)
 
     return tex1;
@@ -774,10 +775,8 @@ struct Params {
 
 
 function testOcean(){
-
-    //mtl.setTexture("u_MaskTexture",_maskTexture);
-
-    let commands = new ComputeCommandBuffer();
+    let ocean = new Ocean();
+    ocean._updateSize(256);
 }
 
 async function test() {
@@ -839,7 +838,7 @@ async function test() {
     // 创建立方体
     scene.addChild(createMeshSprite(PrimitiveMesh.createSphere(0.1),new Color(1,0,0,1)));
     */
-    let t1 = testComputeShader4();
+    //let t1 = testComputeShader4();
     //imgMask.source = new Texture(t1);
     testOcean();
 
