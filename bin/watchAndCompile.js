@@ -123,8 +123,14 @@ function compileTypeScript(filePath, outPath) {
         //sourceMap.sourceRoot = 'file:///'
         sourceMap.sources = [filePath];  //保存绝对路径。对chrome本身不太 友好，但是很方便vscode的调试
         
-        fs.writeFileSync(outPath, result.outputText);
-        fs.writeFileSync(outPath + '.map', JSON.stringify(sourceMap));
+        let mapfile = jsPath + '.map';  //虽然上面的fileName是ts，但是编译完以后，最后的map文件是js，例如 //# sourceMappingURL=test_webgpu_ocean.js.map
+                                        //所以这里用js文件的路径
+        const fd = fs.openSync(mapfile, 'w');
+        fs.writeSync(fd, JSON.stringify(sourceMap));
+        fs.fsyncSync(fd);
+        fs.closeSync(fd);        
+        //fs.writeFileSync(outPath + '.map', JSON.stringify(sourceMap));
+        console.log('写map:', jsPath + '.map')
     }    
     // if (result.sourceMapText) {
     //     fs.writeFileSync(jsPath + '.map', result.sourceMapText);
