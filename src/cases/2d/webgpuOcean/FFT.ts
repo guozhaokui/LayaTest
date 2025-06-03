@@ -2,6 +2,7 @@ import { ShaderDataType } from "laya/RenderDriver/DriverDesign/RenderDevice/Shad
 import { MyComputeShader } from "./MyComputeShader";
 import { Texture2D } from "laya/resource/Texture2D";
 import { TextureFormat } from "laya/RenderEngine/RenderEnum/TextureFormat";
+import { ComputeHelper } from "./ComputeHelper";
 
 const fftPrecomputeCS = `
 const PI: f32 = 3.1415926;
@@ -235,12 +236,12 @@ export class FFT{
             //ComputeHelper.Dispatch(pingPong ? this._verticalStepIFFT[0] : this._verticalStepIFFT[1], this._size, this._size, 1);
         }
         if (pingPong) {
-            ComputeHelper.CopyTexture(buffer, input, this._engine);
+            ComputeHelper.CopyTexture(buffer, input);
         }
         this._permute.setTexture("InputBuffer", input);
         //this._permute.setStorageTexture("OutputBuffer", buffer);
         this._permute.setTexture("OutputBuffer", buffer);
         this._permute.dispatch(this._size,this._size,1);
-        ComputeHelper.CopyTexture(buffer, input, this._engine);
+        ComputeHelper.CopyTexture(buffer, input);
     }
 }

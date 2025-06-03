@@ -20,7 +20,7 @@ struct Params {
 @group(0) @binding(0) var<uniform> params : Params;
 @group(0) @binding(1) var WavesData : texture_storage_2d<rgba32float, write>;
 @group(0) @binding(2) var H0K : texture_storage_2d<rg32float, write>;
-@group(0) @binding(4) var Noise : texture_2d<f32>;
+@group(0) @binding(3) var Noise : texture_2d<f32>;
 
 struct SpectrumParameter {
 	scale : f32,
@@ -37,7 +37,7 @@ struct SpectrumParameters {
     elements : array<SpectrumParameter>,
 };
 
-@group(0) @binding(6) var<storage, read> spectrums : SpectrumParameters;
+@group(0) @binding(4) var<storage, read> spectrums : SpectrumParameters;
 
 fn frequency(k: f32, g: f32, depth: f32) -> f32
 {
@@ -158,7 +158,7 @@ struct Params {
 
 @group(0) @binding(0) var<uniform> params : Params;
 @group(0) @binding(1) var H0 : texture_storage_2d<rgba32float, write>;
-@group(0) @binding(8) var H0K : texture_2d<f32>;
+@group(0) @binding(2) var H0K : texture_2d<f32>;
 
 @compute @workgroup_size(8,8,1)
 fn calculateConjugatedSpectrum(@builtin(global_invocation_id) id : vec3<u32>)
