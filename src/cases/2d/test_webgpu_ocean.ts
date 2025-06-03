@@ -31,6 +31,7 @@ import { Image } from "laya/ui/Image";
 import { Texture } from "laya/resource/Texture";
 import { Texture2D } from "laya/resource/Texture2D";
 import { TextureFormat } from "laya/RenderEngine/RenderEnum/TextureFormat";
+import { MyComputeShader } from "./webgpuOcean/MyComputeShader";
 
 function useWebGPU(){
     LayaGL.renderDeviceFactory = new WebGPURenderDeviceFactory();
@@ -55,11 +56,6 @@ function createMeshSprite(mesh:Mesh,color:Color){
 
 const initialSpectrumCS = `
 const PI : f32 = 3.1415926;
-
-@group(0) @binding(1) var WavesData : texture_storage_2d<rgba32float, write>;
-@group(0) @binding(2) var H0K : texture_storage_2d<rg32float, write>;
-@group(0) @binding(4) var Noise : texture_2d<f32>;
-
 struct Params {
     Size : u32,
     LengthScale : f32,
@@ -69,7 +65,12 @@ struct Params {
     Depth : f32,
 };
 
-@group(0) @binding(5) var<uniform> params : Params;
+@group(0) @binding(0) var<uniform> params : Params;
+
+@group(0) @binding(1) var WavesData : texture_storage_2d<rgba32float, write>;
+@group(0) @binding(2) var H0K : texture_storage_2d<rg32float, write>;
+@group(0) @binding(4) var Noise : texture_2d<f32>;
+
 
 struct SpectrumParameter {
 	scale : f32,
@@ -338,54 +339,6 @@ fn permute(@builtin(global_invocation_id) id : vec3<u32>)
 }
 `
 
-const timeDependentSpectrumCS = `
-@group(0) @binding(1) var H0 : texture_2d<f32>;
-@group(0) @binding(3) var WavesData : texture_2d<f32>;
-
-struct Params {
-    Time : f32,
-};
-
-@group(0) @binding(4) var<uniform> params : Params;
-
-@group(0) @binding(5) var DxDz : texture_storage_2d<rg32float, write>;
-@group(0) @binding(6) var DyDxz : texture_storage_2d<rg32float, write>;
-@group(0) @binding(7) var DyxDyz : texture_storage_2d<rg32float, write>;
-@group(0) @binding(8) var DxxDzz : texture_storage_2d<rg32float, write>;
-
-fn complexMult(a: vec2<f32>, b: vec2<f32>) -> vec2<f32>
-{
-	return vec2<f32>(a.r * b.r - a.g * b.g, a.r * b.g + a.g * b.r);
-}
-
-@compute @workgroup_size(8,8,1)
-fn calculateAmplitudes(@builtin(global_invocation_id) id : vec3<u32>)
-{
-    let iid = vec3<i32>(id);
-	let wave = textureLoad(WavesData, iid.xy, 0);
-	let phase = wave.w * params.Time;
-	let exponent = vec2<f32>(cos(phase), sin(phase));
-    let h0 = textureLoad(H0, iid.xy, 0);
-	let h = complexMult(h0.xy, exponent) + complexMult(h0.zw, vec2<f32>(exponent.x, -exponent.y));
-	let ih = vec2<f32>(-h.y, h.x);
-
-	let displacementX = ih * wave.x * wave.y;
-	let displacementY = h;
-	let displacementZ = ih * wave.z * wave.y;
-
-	let displacementX_dx = -h * wave.x * wave.x * wave.y;
-	let displacementY_dx = ih * wave.x;
-	let displacementZ_dx = -h * wave.x * wave.z * wave.y;
-		 
-	let displacementY_dz = ih * wave.z;
-	let displacementZ_dz = -h * wave.z * wave.z * wave.y;
-
-	textureStore(DxDz,   iid.xy, vec4<f32>(displacementX.x - displacementZ.y, displacementX.y + displacementZ.x, 0., 0.));
-	textureStore(DyDxz,  iid.xy, vec4<f32>(displacementY.x - displacementZ_dx.y, displacementY.y + displacementZ_dx.x, 0., 0.));
-	textureStore(DyxDyz, iid.xy, vec4<f32>(displacementY_dx.x - displacementY_dz.y, displacementY_dx.y + displacementY_dz.x, 0., 0.));
-	textureStore(DxxDzz, iid.xy, vec4<f32>(displacementX_dx.x - displacementZ_dz.y, displacementX_dx.y + displacementZ_dz.x, 0., 0.));
-}
-`
 
 const wavesTexturesMergerCS = `
 struct Params {
@@ -451,14 +404,14 @@ function testComputeShader1() {
     //创建ComputeShader
     //texture_storage_2d<rg32float, write>;
     let code = `
-            @group(0) @binding(0) var<storage,read_write> data:array<f32>;
-            @group(0) @binding(1) var readTex:texture_2d<f32>;
-            @group(0) @binding(2) var writeTex:texture_storage_2d<rg32float, write>;
-            struct Params {
-                Size : u32,
-                LengthScale : f32,
-            };
-            @group(0) @binding(3) var<uniform> params : Params;
+    struct Params {
+        Size : u32,
+        LengthScale : f32,
+    };
+    @group(0) @binding(0) var<uniform> params : Params;
+            @group(0) @binding(1) var<storage,read_write> data:array<f32>;
+            @group(0) @binding(2) var readTex:texture_2d<f32>;
+            @group(0) @binding(3) var writeTex:texture_storage_2d<rg32float, write>;
 
             @compute @workgroup_size(1) fn computeDoubleMulData(
                 @builtin(global_invocation_id) id: vec3u
@@ -466,7 +419,7 @@ function testComputeShader1() {
                 let i = id.x;
                 let coords = id.xy;
                 let n =  textureLoad(readTex, coords, 0);                
-                data[i] = data[i] * 2.0+n.x+params.LengthScale;
+                data[i] = data[i] * 2.0+/*n.x+*/params.LengthScale;
                 textureStore(writeTex,coords,vec4(1,1,1,1));
             }`
 
@@ -476,10 +429,15 @@ function testComputeShader1() {
     let rtexID = Shader3D.propertyNameToID('readTex');
     let wtexID = Shader3D.propertyNameToID('writeTex');
     let paramsID = Shader3D.propertyNameToID('params');
+    let param_size_id = Shader3D.propertyNameToID('Size');
+    let param_LengthScale_id = Shader3D.propertyNameToID('LengthScale');
+
     uniformCommandMap.addShaderUniform(propertyID, "data", ShaderDataType.DeviceBuffer);
     uniformCommandMap.addShaderUniform(rtexID,'readTex',ShaderDataType.Texture2D_float);
     uniformCommandMap.addShaderUniform(wtexID,'writeTex', ShaderDataType.Texture2DStorage,{textureFormat:'rg32float'});
-    uniformCommandMap.addShaderUniform(paramsID,'params', ShaderDataType.DeviceBuffer);
+    uniformCommandMap.addShaderUniform(param_size_id, 'Size', ShaderDataType.Int);
+    uniformCommandMap.addShaderUniform(param_LengthScale_id,'LengthScale',ShaderDataType.Float)
+
 
     let computeshader = ComputeShader.createComputeShader("changeArray", code, [uniformCommandMap]);
     let shaderDefine = LayaGL.unitRenderModuleDataFactory.createDefineDatas();
@@ -493,14 +451,18 @@ function testComputeShader1() {
     strotageBuffer.setData(array, 0, 0, array.byteLength);
     shaderData.setDeviceBuffer(propertyID, strotageBuffer);
 
-    let paramBuffer = renderDevFactory.createDeviceBuffer(EDeviceBufferUsage.UNIFORM | EDeviceBufferUsage.COPY_DST | EDeviceBufferUsage.COPY_SRC);
     let paramBuffValue = new Float32Array(2);
     let dv = new DataView(paramBuffValue.buffer);
     dv.setUint32(0,1,true);
     dv.setFloat32(4,2.2,true);
-    paramBuffer.setDataLength(paramBuffValue.byteLength);
-    paramBuffer.setData(paramBuffValue, 0, 0, paramBuffValue.byteLength);
-    shaderData.setDeviceBuffer(paramsID, paramBuffer);
+
+    // let paramBuffer = renderDevFactory.createDeviceBuffer(EDeviceBufferUsage.UNIFORM | EDeviceBufferUsage.COPY_DST | EDeviceBufferUsage.COPY_SRC);
+    // paramBuffer.setDataLength(paramBuffValue.byteLength);
+    // paramBuffer.setData(paramBuffValue, 0, 0, paramBuffValue.byteLength);
+    // shaderData.setDeviceBuffer(paramsID, paramBuffer);
+    //shaderData.setBuffer(paramsID, paramBuffValue)
+    shaderData.setInt(param_size_id,1);
+    shaderData.setNumber(param_LengthScale_id,1.3);
 
     let noiseTex = genNoiseTex();
     shaderData.setTexture(rtexID,noiseTex);
@@ -526,6 +488,71 @@ function testComputeShader1() {
     })
     return tex1;
 }
+
+
+function testComputeShader4() {
+    //创建ComputeShader
+    //texture_storage_2d<rg32float, write>;
+    let code = `
+    struct Params {
+        Size : u32,
+        LengthScale : f32,
+    };
+    @group(0) @binding(0) var<uniform> params : Params;
+            @group(0) @binding(1) var<storage,read_write> data:array<f32>;
+            @group(0) @binding(2) var readTex:texture_2d<f32>;
+            @group(0) @binding(3) var writeTex:texture_storage_2d<rg32float, write>;
+
+            @compute @workgroup_size(1) fn computeDoubleMulData(
+                @builtin(global_invocation_id) id: vec3u
+            ){
+                let i = id.x;
+                let coords = id.xy;
+                let n =  textureLoad(readTex, coords, 0);                
+                data[i] = data[i] * 2.0+/*n.x+*/params.LengthScale;
+                textureStore(writeTex,coords,vec4(1,1,1,1));
+            }`
+
+    let renderDevFactory = LayaGL.renderDeviceFactory;
+
+    let cs = new MyComputeShader('changeArray', code, 'computeDoubleMulData', {
+        'data':ShaderDataType.DeviceBuffer,
+        'readTex':ShaderDataType.Texture2D_float,
+        'writeTex':{type:ShaderDataType.Texture2DStorage,ext:{textureFormat:'rg32float'}},
+        'Size':ShaderDataType.Int,
+        'LengthScale':ShaderDataType.Float
+    })
+
+    let strotageBuffer = renderDevFactory.createDeviceBuffer(EDeviceBufferUsage.STORAGE | EDeviceBufferUsage.COPY_DST | EDeviceBufferUsage.COPY_SRC);
+    let array = new Float32Array([1, 3, 5]);
+    strotageBuffer.setDataLength(array.byteLength);
+    strotageBuffer.setData(array, 0, 0, array.byteLength);
+    cs.setDeviceBuffer('data', strotageBuffer);
+
+    let paramBuffValue = new Float32Array(2);
+    let dv = new DataView(paramBuffValue.buffer);
+    dv.setUint32(0,1,true);
+    dv.setFloat32(4,2.2,true);
+
+    // let paramBuffer = renderDevFactory.createDeviceBuffer(EDeviceBufferUsage.UNIFORM | EDeviceBufferUsage.COPY_DST | EDeviceBufferUsage.COPY_SRC);
+    // paramBuffer.setDataLength(paramBuffValue.byteLength);
+    // paramBuffer.setData(paramBuffValue, 0, 0, paramBuffValue.byteLength);
+    // shaderData.setDeviceBuffer(paramsID, paramBuffer);
+    //shaderData.setBuffer(paramsID, paramBuffValue)
+    cs.setInt('Size',1);
+    cs.setNumber('LengthScale' ,1.3);
+
+    let noiseTex = genNoiseTex();
+    cs.setTexture('readTex',noiseTex);
+    let tex1 = new Texture2D(256,256,TextureFormat.R32G32,{isStorage:true});
+    cs.setTexture('writeTex',tex1);
+
+    cs.dbgReadBuffer(strotageBuffer);
+    cs.dispatch(array.length)
+
+    return tex1;
+}
+
 
 
 // async function testComputeShader2() {
@@ -676,10 +703,19 @@ function testComputeShader1() {
 
 function testComputeShader3() {
     /*
+struct Params {
+    Size : u32,
+    LengthScale : f32,
+    CutoffHigh : f32,
+    CutoffLow : f32,
+    GravityAcceleration : f32,
+    Depth : f32,
+};
+
+@group(0) @binding(0) var<uniform> params : Params;
 @group(0) @binding(1) var WavesData : texture_storage_2d<rgba32float, write>;
 @group(0) @binding(2) var H0K : texture_storage_2d<rg32float, write>;
 @group(0) @binding(4) var Noise : texture_2d<f32>;    
-@group(0) @binding(5) var<uniform> params : Params;
 @group(0) @binding(6) var<storage, read> spectrums : SpectrumParameters;
     */
     //创建ComputeShader
@@ -697,14 +733,11 @@ function testComputeShader3() {
     let _spectrumParameters = renderDevFactory.createDeviceBuffer(EDeviceBufferUsage.STORAGE | EDeviceBufferUsage.COPY_DST | EDeviceBufferUsage.COPY_SRC);
     //TODO 赋值
 
-
+    let _toid = Shader3D.propertyNameToID;
     let uniformCommandMap = renderDevFactory.createGlobalUniformMap("changeArray");
-    let propertyID = Shader3D.propertyNameToID("data");
-    let rtexID = Shader3D.propertyNameToID('readTex');
-    let wtexID = Shader3D.propertyNameToID('writeTex');
-    uniformCommandMap.addShaderUniform(propertyID, "data", ShaderDataType.DeviceBuffer);
-    uniformCommandMap.addShaderUniform(rtexID,'readTex',ShaderDataType.Texture2D_float);
-    uniformCommandMap.addShaderUniform(wtexID,'writeTex', ShaderDataType.Texture2DStorage,{textureFormat:'rg32float'});
+    uniformCommandMap.addShaderUniform(_toid("data"), "data", ShaderDataType.DeviceBuffer);
+    uniformCommandMap.addShaderUniform(_toid('readTex'),'readTex',ShaderDataType.Texture2D_float);
+    uniformCommandMap.addShaderUniform(_toid('writeTex'),'writeTex', ShaderDataType.Texture2DStorage,{textureFormat:'rg32float'});
 
     let computeshader = ComputeShader.createComputeShader("changeArray", code, [uniformCommandMap]);
     let shaderDefine = LayaGL.unitRenderModuleDataFactory.createDefineDatas();
@@ -716,11 +749,11 @@ function testComputeShader3() {
     let array = new Float32Array([1, 3, 5]);
     strotageBuffer.setDataLength(array.byteLength);
     strotageBuffer.setData(array, 0, 0, array.byteLength);
-    shaderData.setDeviceBuffer(propertyID, strotageBuffer);
+    shaderData.setDeviceBuffer(_toid("data"), strotageBuffer);
     let noiseTex = genNoiseTex();
-    shaderData.setTexture(rtexID,noiseTex);
+    shaderData.setTexture(_toid('readTex'),noiseTex);
     let tex1 = new Texture2D(256,256,TextureFormat.R32G32,{isStorage:true});
-    shaderData.setTexture(wtexID,tex1);
+    shaderData.setTexture(_toid('writeTex'),tex1);
 
     let readStrotageBuffer = renderDevFactory.createDeviceBuffer(EDeviceBufferUsage.COPY_DST | EDeviceBufferUsage.MAP_READ);
     readStrotageBuffer.setDataLength(array.byteLength);
@@ -753,6 +786,7 @@ async function test() {
     await Laya.init(0, 0);
     Laya.stage.scaleMode = Stage.SCALE_FULL;
     Laya.stage.screenMode = Stage.SCREEN_NONE;
+    /*
     let sp = new Sprite();
     sp.graphics.clipRect(0, 0, 150, 150);
     sp.graphics.drawPoly(0, 0, [0, 0, 100, 0, 100, 100], 'green', 'yellow', 2)
@@ -804,7 +838,8 @@ async function test() {
 
     // 创建立方体
     scene.addChild(createMeshSprite(PrimitiveMesh.createSphere(0.1),new Color(1,0,0,1)));
-    let t1 = testComputeShader1();
+    */
+    let t1 = testComputeShader4();
     //imgMask.source = new Texture(t1);
     testOcean();
 
