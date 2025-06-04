@@ -170,6 +170,7 @@ GLSL Start
         gl_FragColor = surfaceColor;
 
         gl_FragColor = outputTransform(gl_FragColor);
+        gl_FragColor = vec4(fract(pixel.uv0),0.0,1.0);
     }
 #endGLSL
 

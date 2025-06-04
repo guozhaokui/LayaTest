@@ -97,6 +97,7 @@ export class OceanGeometry {
         const vertices = [];
         const triangles = [];
         const normals = [];
+        const uvs = [];
 
         // 生成顶点数据
         for (let i = 0; i < height + 1; ++i) {
@@ -115,6 +116,7 @@ export class OceanGeometry {
 
                 // 法线向量 (Y轴向上)
                 normals.push(0, 1, 0);
+                uvs.push(j,i);
             }
         }
 
@@ -133,12 +135,12 @@ export class OceanGeometry {
         }
 
         // 设置顶点数据
-        const vertexDeclaration = VertexMesh.getVertexDeclaration("POSITION,NORMAL");
-        const vertexBuffer = new Float32Array(vertices.length + normals.length);
+        const vertexDeclaration = VertexMesh.getVertexDeclaration("POSITION,NORMAL,UV");
+        const vertexBuffer = new Float32Array(vertices.length + normals.length +uvs.length);
 
         // 交错存储顶点位置和法线数据
         for (let i = 0; i < vertices.length / 3; i++) {
-            const index = i * 6;
+            const index = i * 8;
             const vertIndex = i * 3;
 
             // 位置
@@ -150,6 +152,10 @@ export class OceanGeometry {
             vertexBuffer[index + 3] = normals[vertIndex];
             vertexBuffer[index + 4] = normals[vertIndex + 1];
             vertexBuffer[index + 5] = normals[vertIndex + 2];
+
+            //uv
+            vertexBuffer[index+6] = uvs[i*2];
+            vertexBuffer[index+7] = uvs[i*2+1];
         }
 
         let mesh = PrimitiveMesh._createMesh(vertexDeclaration, vertexBuffer, new Uint16Array(triangles))
