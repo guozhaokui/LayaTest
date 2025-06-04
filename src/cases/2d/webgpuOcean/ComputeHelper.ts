@@ -125,7 +125,7 @@ export class ComputeHelper {
                     "width":ShaderDataType.Int,
                     "height":ShaderDataType.Int,
                     "dest":{type:ShaderDataType.Texture2DStorage, ext:{textureFormat:numChannels==4?'rgba32float':'rg32float'}},
-                    "src":ShaderDataType.Texture2D,
+                    "src":ShaderDataType.Texture2D_float,
                 }
             )
 

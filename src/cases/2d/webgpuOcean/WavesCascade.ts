@@ -15,12 +15,12 @@ struct Params {
 
 @group(0) @binding(0) var<uniform> params : Params;
 @group(0) @binding(1) var H0 : texture_2d<f32>;
-@group(0) @binding(3) var WavesData : texture_2d<f32>;
+@group(0) @binding(2) var WavesData : texture_2d<f32>;
 
-@group(0) @binding(5) var DxDz : texture_storage_2d<rg32float, write>;
-@group(0) @binding(6) var DyDxz : texture_storage_2d<rg32float, write>;
-@group(0) @binding(7) var DyxDyz : texture_storage_2d<rg32float, write>;
-@group(0) @binding(8) var DxxDzz : texture_storage_2d<rg32float, write>;
+@group(0) @binding(3) var DxDz : texture_storage_2d<rg32float, write>;
+@group(0) @binding(4) var DyDxz : texture_storage_2d<rg32float, write>;
+@group(0) @binding(5) var DyxDyz : texture_storage_2d<rg32float, write>;
+@group(0) @binding(6) var DxxDzz : texture_storage_2d<rg32float, write>;
 
 fn complexMult(a: vec2<f32>, b: vec2<f32>) -> vec2<f32>
 {
@@ -98,6 +98,8 @@ fn fillResultTextures(@builtin(global_invocation_id) id : vec3<u32>)
 `
 
 export class WavesCascade {
+    static wcid=0;
+    _id=0;
     _fft: FFT;
     _size: number;
     _initialSpectrum: InitialSpectrum;
@@ -117,26 +119,27 @@ export class WavesCascade {
     _texturesMerger:MyComputeShader;
 
     constructor(size: number, fft: FFT, noise:Texture2D) {
+        this._id = WavesCascade.wcid++;
         this._size = size;
         this._fft = fft;
         this._initialSpectrum = new InitialSpectrum(size,noise);
         let cs = this._timeDependentSpectrum = new MyComputeShader('timeDependentSpectrumCS',timeDependentSpectrumCS,'calculateAmplitudes',{
             "Time":ShaderDataType.Float,
-            "H0": ShaderDataType.Texture2D,
-            "WavesData": ShaderDataType.Texture2D,
+            "H0": ShaderDataType.Texture2D_float,
+            "WavesData": ShaderDataType.Texture2D_float,
             "DxDz": { type:ShaderDataType.Texture2DStorage, ext:{textureFormat:'rg32float'} },
             "DyDxz": { type:ShaderDataType.Texture2DStorage, ext:{textureFormat:'rg32float'} },
             "DyxDyz": { type:ShaderDataType.Texture2DStorage, ext:{textureFormat:'rg32float'} },
             "DxxDzz": { type:ShaderDataType.Texture2DStorage, ext:{textureFormat:'rg32float'} },
         })
 
-        this._buffer = new Texture2D(this._size,this._size,TextureFormat.R32G32,{isStorage:true});
-        this._DxDz   = new Texture2D(this._size,this._size,TextureFormat.R32G32,{isStorage:true});
-        this._DyDxz  = new Texture2D(this._size,this._size,TextureFormat.R32G32,{isStorage:true});
-        this._DyxDyz = new Texture2D(this._size,this._size,TextureFormat.R32G32,{isStorage:true});
-        this._DxxDzz = new Texture2D(this._size,this._size,TextureFormat.R32G32,{isStorage:true});
+        this._buffer = new Texture2D(size,size,TextureFormat.R32G32,{isStorage:true,name:'buffer'+this._id});
+        this._DxDz   = new Texture2D(size,size,TextureFormat.R32G32,{isStorage:true,name:'DxDz'+this._id});
+        this._DyDxz  = new Texture2D(size,size,TextureFormat.R32G32,{isStorage:true,name:'DyDxz'+this._id});
+        this._DyxDyz = new Texture2D(size,size,TextureFormat.R32G32,{isStorage:true,name:'DyxDyz'+this._id});
+        this._DxxDzz = new Texture2D(size,size,TextureFormat.R32G32,{isStorage:true,name:'DxxDzz'+this._id});
 
-        cs.setInt('Time',1);
+        cs.setNumber('Time',1);
         cs.setTexture('H0',this._initialSpectrum._initialSpectrum);
         cs.setTexture('WavesData',this._initialSpectrum.wavesData);
         cs.setTexture('DxDz',this._DxDz);
@@ -149,18 +152,18 @@ export class WavesCascade {
             "DeltaTime":ShaderDataType.Float,
             "Displacement": { type:ShaderDataType.Texture2DStorage, ext:{textureFormat:'rgba16float'} },
             "Derivatives": { type:ShaderDataType.Texture2DStorage, ext:{textureFormat:'rgba16float'} },
-            "TurbulenceRead": ShaderDataType.Texture2D,
+            "TurbulenceRead": ShaderDataType.Texture2D_float,
             "TurbulenceWrite": { type:ShaderDataType.Texture2DStorage, ext:{textureFormat:'rgba16float'} },
-            "DxDz": ShaderDataType.Texture2D,
-            "DyDxz": ShaderDataType.Texture2D,
-            "DyxDyz": ShaderDataType.Texture2D,
-            "DxxDzz": ShaderDataType.Texture2D,
+            "DxDz": ShaderDataType.Texture2D_float,
+            "DyDxz": ShaderDataType.Texture2D_float,
+            "DyxDyz": ShaderDataType.Texture2D_float,
+            "DxxDzz": ShaderDataType.Texture2D_float,
         });
 
-        this._displacement = new Texture2D(this._size,this._size,TextureFormat.R16G16B16A16,{isStorage:true});
-        this._derivatives = new Texture2D(this._size,this._size,TextureFormat.R16G16B16A16,{isStorage:true});
-        this._turbulence = new Texture2D(this._size,this._size,TextureFormat.R16G16B16A16,{isStorage:true});
-        this._turbulence2 = new Texture2D(this._size,this._size,TextureFormat.R16G16B16A16,{isStorage:true});
+        this._displacement = new Texture2D(size,size,TextureFormat.R16G16B16A16,{isStorage:true,name:'displacement'+this._id});
+        this._derivatives = new Texture2D(size,size,TextureFormat.R16G16B16A16,{isStorage:true,name:'derivatives'+this._id});
+        this._turbulence = new Texture2D(size,size,TextureFormat.R16G16B16A16,{isStorage:true,name:'turbulence'+this._id});
+        this._turbulence2 = new Texture2D(size,size,TextureFormat.R16G16B16A16,{isStorage:true,name:'turbulence2'+this._id});
         cs2.setNumber('Lambda',1);
         cs2.setNumber('DeltaTime',1);
         cs2.setTexture('Displacement',this._displacement);
@@ -184,22 +187,22 @@ export class WavesCascade {
         let cs = this._timeDependentSpectrum;
         cs.setNumber('Time',time);
         cs.dispatch(this._size,this._size,1);
-
+        
         this._fft.IFFT2D(this._DxDz, this._buffer);
         this._fft.IFFT2D(this._DyDxz, this._buffer);
         this._fft.IFFT2D(this._DyxDyz, this._buffer);
         this._fft.IFFT2D(this._DxxDzz, this._buffer);
-
+        
         let deltaTime = ILaya.timer.delta / 1000;
         if (deltaTime > 0.5) {
             // avoid too big delta time
             deltaTime = 0.5;
         }
-
+        
         let texMerger = this._texturesMerger;
         texMerger.setNumber('Lambda', 1);
         texMerger.setNumber('DeltaTime', 1);
-
+        
         this._pingPongTurbulence = !this._pingPongTurbulence;
         texMerger.setTexture('TurbulenceRead',this._pingPongTurbulence?this._turbulence:this._turbulence2);
         //setStorageTexture

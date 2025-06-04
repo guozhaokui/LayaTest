@@ -195,9 +195,9 @@ export class InitialSpectrum {
             //"params": { group: 0, binding: 5 },
             "spectrums": ShaderDataType.ReadOnlyDeviceBuffer
         });
-        this._initialSpectrum = new Texture2D(textureSize,textureSize, TextureFormat.R32G32B32A32,{isStorage:true});
-        this._precomputedData = new Texture2D(textureSize,textureSize,TextureFormat.R32G32B32A32,{isStorage:true});
-        this._buffer = new Texture2D(textureSize,textureSize,TextureFormat.R32G32,{isStorage:true});
+        this._initialSpectrum = new Texture2D(textureSize,textureSize, TextureFormat.R32G32B32A32,{isStorage:true,name:'H0'});
+        this._precomputedData = new Texture2D(textureSize,textureSize,TextureFormat.R32G32B32A32,{isStorage:true,name:'_precomputedData'});
+        this._buffer = new Texture2D(textureSize,textureSize,TextureFormat.R32G32,{isStorage:true,name:'H0K'});
         this._spectrumParameters = LayaGL.renderDeviceFactory.createDeviceBuffer(EDeviceBufferUsage.STORAGE | EDeviceBufferUsage.COPY_DST );
         this._spectrumParameters.setDataLength(8*4*2);
         this._spectrumpBuff = new Float32Array(8*2);

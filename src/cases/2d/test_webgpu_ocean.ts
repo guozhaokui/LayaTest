@@ -773,12 +773,6 @@ struct Params {
     return tex1;
 }
 
-
-function testOcean(){
-    let ocean = new Ocean();
-    ocean._updateSize(256);
-}
-
 async function test() {
     //初始化引擎
     useWebGPU();    
@@ -816,7 +810,7 @@ async function test() {
     imgMask.pos(220, 10);
     imgMask.source = new Texture(maskTexture2d);
     Laya.stage.addChild(imgMask);
-
+    */
 
 
     // 创建 3D 场景
@@ -836,11 +830,13 @@ async function test() {
     dircom.color.setValue(1, 1, 1, 1);
 
     // 创建立方体
-    scene.addChild(createMeshSprite(PrimitiveMesh.createSphere(0.1),new Color(1,0,0,1)));
-    */
+    let sp3d = createMeshSprite(PrimitiveMesh.createSphere(0.1),new Color(1,0,0,1));
+    scene.addChild(sp3d);
+    
     //let t1 = testComputeShader4();
     //imgMask.source = new Texture(t1);
-    testOcean();
+    let ocean = sp3d.addComponent(Ocean)
+    ocean._updateSize(256);
 
     function renderloop() {
         requestAnimationFrame(renderloop);

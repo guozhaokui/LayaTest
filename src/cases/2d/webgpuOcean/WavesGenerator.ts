@@ -32,14 +32,16 @@ export class WavesGenerator {
     genNoiseTex(size:number) {
         let channel = 4;
         let data = new Float32Array(size * size * channel);
+        let pitch = size*channel;
         for (let i = 0; i < size; ++i) {
             for (let j = 0; j < size; ++j) {
-                data[j * size * 2 + i * 2 + 0] = this._normalRandom();
-                data[j * size * 2 + i * 2 + 1] = this._normalRandom();
+                let cpos = j * pitch + i * channel;
+                data[cpos++] = this._normalRandom();
+                data[cpos++] = this._normalRandom();
             }
         }
 
-        let tex = new Texture2D(size, size, TextureFormat.R32G32B32A32, false, false);
+        let tex = new Texture2D(size, size, TextureFormat.R32G32B32A32, {name:'noise'});
         tex.setPixelsData(data, false, false);
         return tex;
     }
@@ -71,7 +73,9 @@ export class WavesGenerator {
     }
 
     _getDisplacementMap() {
+        /*
         let buffer = this._cascades[0]._displacement.getPixels();
         this._displacementMap = new Uint16Array(buffer.buffer);
+        */
     }
 }

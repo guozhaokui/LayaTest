@@ -1,7 +1,8 @@
+import { Script } from "laya/components/Script";
 import { WavesGenerator } from "./WavesGenerator";
 import { WavesSettings } from "./WavesSettings";
 
-export class Ocean{
+export class Ocean extends Script{
     _wavesGenerator:WavesGenerator;
     _size = 256;
     _wavesSettings = new WavesSettings();

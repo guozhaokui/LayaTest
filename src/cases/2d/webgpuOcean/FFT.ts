@@ -48,10 +48,10 @@ struct Params {
 
 @group(0) @binding(0) var<uniform> params : Params;
 
-@group(0) @binding(3) var PrecomputedData : texture_2d<f32>;
+@group(0) @binding(1) var PrecomputedData : texture_2d<f32>;
 
-@group(0) @binding(5) var InputBuffer : texture_2d<f32>;
-@group(0) @binding(6) var OutputBuffer : texture_storage_2d<rg32float, write>;
+@group(0) @binding(2) var InputBuffer : texture_2d<f32>;
+@group(0) @binding(3) var OutputBuffer : texture_storage_2d<rg32float, write>;
 
 fn complexMult(a: vec2<f32>, b: vec2<f32>) -> vec2<f32>
 {
@@ -82,10 +82,10 @@ struct Params {
 
 @group(0) @binding(0) var<uniform> params : Params;
 
-@group(0) @binding(3) var PrecomputedData : texture_2d<f32>;
+@group(0) @binding(1) var PrecomputedData : texture_2d<f32>;
 
-@group(0) @binding(5) var InputBuffer : texture_2d<f32>;
-@group(0) @binding(6) var OutputBuffer : texture_storage_2d<rg32float, write>;
+@group(0) @binding(2) var InputBuffer : texture_2d<f32>;
+@group(0) @binding(3) var OutputBuffer : texture_storage_2d<rg32float, write>;
 
 fn complexMult(a: vec2<f32>, b: vec2<f32>) -> vec2<f32>
 {
@@ -109,8 +109,8 @@ fn verticalStepInverseFFT(@builtin(global_invocation_id) id : vec3<u32>)
 `
 
 const fftInverseFFT3CS = `
-@group(0) @binding(5) var InputBuffer : texture_2d<f32>;
-@group(0) @binding(6) var OutputBuffer : texture_storage_2d<rg32float, write>;
+@group(0) @binding(0) var InputBuffer : texture_2d<f32>;
+@group(0) @binding(1) var OutputBuffer : texture_storage_2d<rg32float, write>;
 
 @compute @workgroup_size(8,8,1)
 fn permute(@builtin(global_invocation_id) id : vec3<u32>)
@@ -142,7 +142,7 @@ export class FFT{
         )
         this._computeTwiddleFactors = cs;
         const logSize = Math.log2(size) | 0;
-        this._precomputedData = new Texture2D(logSize,this._size,TextureFormat.R32G32B32A32,{isStorage:true});
+        this._precomputedData = new Texture2D(logSize,this._size,TextureFormat.R32G32B32A32,{isStorage:true,name:'PrecomputeBuffer'});
         cs.setInt('Step',1);
         cs.setInt('Size',this._size);
         cs.setTexture('PrecomputeBuffer',this._precomputedData)
@@ -157,8 +157,8 @@ export class FFT{
                 {
                     'Step':ShaderDataType.Int,
                     'Size':ShaderDataType.Int,
-                    'PrecomputedData':ShaderDataType.Texture2D,
-                    'InputBuffer':ShaderDataType.Texture2D,
+                    'PrecomputedData':ShaderDataType.Texture2D_float,
+                    'InputBuffer':ShaderDataType.Texture2D_float,
                     'OutputBuffer':{type:ShaderDataType.Texture2DStorage,ext:{textureFormat:'rg32float'}},
                 });
             cs.setInt('Step',1);
@@ -171,8 +171,8 @@ export class FFT{
                 {
                     'Step':ShaderDataType.Int,
                     'Size':ShaderDataType.Int,
-                    'PrecomputedData':ShaderDataType.Texture2D,
-                    'InputBuffer':ShaderDataType.Texture2D,
+                    'PrecomputedData':ShaderDataType.Texture2D_float,
+                    'InputBuffer':ShaderDataType.Texture2D_float,
                     'OutputBuffer':{type:ShaderDataType.Texture2DStorage,ext:{textureFormat:'rg32float'}},
                 }
             );
@@ -184,7 +184,7 @@ export class FFT{
 
         this._permute = new MyComputeShader('permute',fftInverseFFT3CS,'permute',
             {
-                'InputBuffer':ShaderDataType.Texture2D,
+                'InputBuffer':ShaderDataType.Texture2D_float,
                 'OutputBuffer':{type:ShaderDataType.Texture2DStorage,ext:{textureFormat:'rg32float'}},
             }
         );
