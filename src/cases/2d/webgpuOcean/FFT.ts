@@ -142,7 +142,7 @@ export class FFT{
         )
         this._computeTwiddleFactors = cs;
         const logSize = Math.log2(size) | 0;
-        this._precomputedData = new Texture2D(logSize,this._size,TextureFormat.R32G32,{isStorage:true});
+        this._precomputedData = new Texture2D(logSize,this._size,TextureFormat.R32G32B32A32,{isStorage:true});
         cs.setInt('Step',1);
         cs.setInt('Size',this._size);
         cs.setTexture('PrecomputeBuffer',this._precomputedData)

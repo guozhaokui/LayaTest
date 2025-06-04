@@ -185,7 +185,7 @@ export class InitialSpectrum {
         let cs1 = this._phase1 = new MyComputeShader('initialSpectrum', initialSpectrumCS, 'calculateInitialSpectrum',{
             "WavesData": { type:ShaderDataType.Texture2DStorage, ext:{textureFormat:'rgba32float'} },
             "H0K": { type:ShaderDataType.Texture2DStorage, ext:{textureFormat:'rg32float'} },
-            "Noise": ShaderDataType.Texture2D,
+            "Noise": ShaderDataType.Texture2D_float,
             "Size" : ShaderDataType.Int,
             "LengthScale" : ShaderDataType.Float,
             "CutoffHigh" : ShaderDataType.Float,
@@ -193,12 +193,12 @@ export class InitialSpectrum {
             "GravityAcceleration" : ShaderDataType.Float,
             "Depth" : ShaderDataType.Float,
             //"params": { group: 0, binding: 5 },
-            "spectrums": ShaderDataType.DeviceBuffer
+            "spectrums": ShaderDataType.ReadOnlyDeviceBuffer
         });
         this._initialSpectrum = new Texture2D(textureSize,textureSize, TextureFormat.R32G32B32A32,{isStorage:true});
         this._precomputedData = new Texture2D(textureSize,textureSize,TextureFormat.R32G32B32A32,{isStorage:true});
         this._buffer = new Texture2D(textureSize,textureSize,TextureFormat.R32G32,{isStorage:true});
-        this._spectrumParameters = LayaGL.renderDeviceFactory.createDeviceBuffer(EDeviceBufferUsage.STORAGE | EDeviceBufferUsage.COPY_DST | EDeviceBufferUsage.COPY_SRC);
+        this._spectrumParameters = LayaGL.renderDeviceFactory.createDeviceBuffer(EDeviceBufferUsage.STORAGE | EDeviceBufferUsage.COPY_DST );
         this._spectrumParameters.setDataLength(8*4*2);
         this._spectrumpBuff = new Float32Array(8*2);
         cs1.setInt('Size',1);
@@ -221,7 +221,7 @@ export class InitialSpectrum {
             "GravityAcceleration" : ShaderDataType.Float,
             "Depth" : ShaderDataType.Float,
             "H0":{ type:ShaderDataType.Texture2DStorage, ext:{textureFormat:'rgba32float'} },
-            "H0K":ShaderDataType.Texture2D,
+            "H0K":ShaderDataType.Texture2D_float,
         });
         cs2.setTexture('H0', this._initialSpectrum);
         cs2.setInt('Size',1);
