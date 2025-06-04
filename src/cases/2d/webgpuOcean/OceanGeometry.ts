@@ -11,6 +11,7 @@ import { Sprite3D } from "laya/d3/core/Sprite3D";
 import { MeshFilter } from "laya/d3/core/MeshFilter";
 import { MeshRenderer } from "laya/d3/core/MeshRenderer";
 import { Quaternion } from "laya/maths/Quaternion";
+import { Laya } from "Laya";
 
 enum Seams {
     None = 0,   // 无边缘
@@ -55,7 +56,8 @@ export class OceanGeometry {
     }
 
     async initializeMaterials() {
-
+        let mtl = Laya.loader.getRes('ocean/Ocean.lmat')
+        this._materials=[mtl,mtl,mtl];
     }
 
     initializeMeshes() {
@@ -85,8 +87,8 @@ export class OceanGeometry {
         let boxfilter = sp3d.addComponent(MeshFilter);
         boxfilter.sharedMesh = mesh;
         this._root.addChild(sp3d);
-        //mesh.material = mat;
-        //mesh.parent = this._root;
+        boxrender.sharedMaterial = mat;
+        boxrender.receiveShadow = true;
         //mesh.receiveShadows = true;
         return sp3d;
     }

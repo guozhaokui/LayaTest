@@ -780,6 +780,11 @@ async function test() {
     await Laya.init(0, 0);
     Laya.stage.scaleMode = Stage.SCALE_FULL;
     Laya.stage.screenMode = Stage.SCREEN_NONE;
+
+    //先加载shader，再加载lmat才能正确加载lmat。
+    //否则lmat的加载依赖于fileconfig.json, 这里并没有
+    await Laya.loader.load('ocean/Ocean.shader')
+    await Laya.loader.load(['ocean/Ocean.lmat']);
     /*
     let sp = new Sprite();
     sp.graphics.clipRect(0, 0, 150, 150);
