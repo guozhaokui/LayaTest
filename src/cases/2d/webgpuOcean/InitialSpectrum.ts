@@ -5,6 +5,7 @@ import { Texture2D } from "laya/resource/Texture2D";
 import { TextureFormat } from "laya/RenderEngine/RenderEnum/TextureFormat";
 import { EDeviceBufferUsage, IDeviceBuffer } from "laya/RenderDriver/DriverDesign/RenderDevice/IDeviceBuffer";
 import { LayaGL } from "laya/layagl/LayaGL";
+import { clamp } from "./Utils";
 
 const initialSpectrumCS = `
 const PI : f32 = 3.1415926;
@@ -245,10 +246,6 @@ export class InitialSpectrum {
         //等待shader准备好
     }
 
-    clamp(v:number,min:number,max:number){
-        return Math.min(Math.max(v,min),max)
-    }
-
     _JonswapAlpha(g:number, fetch:number, windSpeed:number) {
         return 0.076 * Math.pow(g * fetch / windSpeed / windSpeed, -0.22);
     }
@@ -273,7 +270,7 @@ export class InitialSpectrum {
         buff[i++]= display.scale;
         buff[i++]= display.windDirection / 180 * Math.PI;
         buff[i++]= display.spreadBlend;
-        buff[i++]= this.clamp(display.swell, 0.01, 1);
+        buff[i++]= clamp(display.swell, 0.01, 1);
         buff[i++]= this._JonswapAlpha(wavesSettings.g, display.fetch, display.windSpeed);
         buff[i++] = this._JonswapPeakFrequency(wavesSettings.g, display.fetch, display.windSpeed);
         buff[i++] = display.peakEnhancement;
@@ -284,7 +281,7 @@ export class InitialSpectrum {
         buff[i++]= display.scale;
         buff[i++]= display.windDirection / 180 * Math.PI;
         buff[i++]= display.spreadBlend;
-        buff[i++]= this.clamp(display.swell, 0.01, 1);
+        buff[i++]= clamp(display.swell, 0.01, 1);
         buff[i++]= this._JonswapAlpha(wavesSettings.g, display.fetch, display.windSpeed);
         buff[i++] = this._JonswapPeakFrequency(wavesSettings.g, display.fetch, display.windSpeed);
         buff[i++] = display.peakEnhancement;

@@ -33,6 +33,7 @@ import { Texture2D } from "laya/resource/Texture2D";
 import { TextureFormat } from "laya/RenderEngine/RenderEnum/TextureFormat";
 import { MyComputeShader } from "./webgpuOcean/MyComputeShader";
 import { Ocean } from "./webgpuOcean/ocean";
+import { CameraController1 } from "./webgpuOcean/CameraController1";
 
 function useWebGPU(){
     LayaGL.renderDeviceFactory = new WebGPURenderDeviceFactory();
@@ -830,13 +831,14 @@ async function test() {
     dircom.color.setValue(1, 1, 1, 1);
 
     // 创建立方体
-    let sp3d = createMeshSprite(PrimitiveMesh.createSphere(0.1),new Color(1,0,0,1));
+    let sp3d = createMeshSprite(PrimitiveMesh.createBox(0.1,0.1,0.1),new Color(1,1,0,1));
     scene.addChild(sp3d);
     
+    camera.addComponent(CameraController1)
     //let t1 = testComputeShader4();
     //imgMask.source = new Texture(t1);
     let ocean = sp3d.addComponent(Ocean)
-    ocean._updateSize(256);
+    //ocean._updateSize(256);
 
     function renderloop() {
         requestAnimationFrame(renderloop);
