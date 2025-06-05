@@ -15,6 +15,7 @@ import { Laya } from "Laya";
 import { Transform3D } from "laya/d3/core/Transform3D";
 import { WavesGenerator } from "./WavesGenerator";
 import { FilterMode } from "laya/RenderEngine/RenderEnum/FilterMode";
+import { Color } from "laya/maths/Color";
 
 enum Seams {
     None = 0,   // 无边缘
@@ -168,10 +169,32 @@ export class OceanGeometry {
         this._wavesGenerator = wavesGen;
         let mtl:Material = Laya.loader.getRes('ocean/Ocean.lmat');
         mtl.setTexture('u_Displacement_c0',wavesGen._cascades[0]._displacement);
+        mtl.setTexture('u_Displacement_c1',wavesGen._cascades[1]._displacement);
+        mtl.setTexture('u_Displacement_c2',wavesGen._cascades[2]._displacement);
         mtl.setFloat('u_LOD_scale',7.13);
         mtl.setFloat('u_LengthScale0',wavesGen.lengthScale[0]);
         mtl.setFloat('u_LengthScale1',wavesGen.lengthScale[1]);
         mtl.setFloat('u_LengthScale2',wavesGen.lengthScale[2]);
+        mtl.setFloat('_SSSBase',-0.261);
+        mtl.setFloat('_SSSStrength',0.15);
+        mtl.setFloat('_SSSScale',4.7);
+        mtl.setColor('_SSSColor', new Color(0.1541919, 0.8857628, 0.990566,1.0));
+
+        mtl.setTexture('_Derivatives_c0', wavesGen._cascades[0]._derivatives);
+        mtl.setTexture('_Derivatives_c1', wavesGen._cascades[1]._derivatives);
+        mtl.setTexture('_Derivatives_c2', wavesGen._cascades[2]._derivatives);
+
+        mtl.setTexture('_Turbulence_c0', wavesGen._cascades[0]._turbulence);
+        mtl.setTexture('_Turbulence_c1', wavesGen._cascades[1]._turbulence);
+        mtl.setTexture('_Turbulence_c2', wavesGen._cascades[2]._turbulence);
+
+        mtl.setFloat('_FoamBiasLOD0',0.84);
+        mtl.setFloat('_FoamBiasLOD1',1.83);
+        mtl.setFloat('_FoamBiasLOD2',2.72);
+
+        mtl.setFloat('_FoamScale',2.4);
+        mtl.setColor('_FoamColor', new Color(1,1,1,1));
+
         this._materials=[mtl,mtl,mtl];
     }
 

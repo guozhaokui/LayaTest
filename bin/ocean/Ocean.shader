@@ -10,27 +10,51 @@ Shader3D Start
         u_TilingOffset: { type: Vector4, default: [1, 1, 0, 0] },
 
         u_AlbedoColor: { type: Color, default: [1, 1, 1, 1] },
-        u_AlbedoTexture: { type: Texture2D, options: { define: "ALBEDOTEXTURE" } },
+        //u_AlbedoTexture: { type: Texture2D, options: { define: "ALBEDOTEXTURE" } },
 
-        u_NormalTexture: { type: Texture2D, options: { define: "NORMALTEXTURE" } },
+        //u_NormalTexture: { type: Texture2D, options: { define: "NORMALTEXTURE" } },
         u_NormalScale: { type: Float, default: 1.0, range: [0.0, 2.0] },
 
         u_Metallic: { type: Float, default: 0.0, range: [0.0, 1.0] },
         u_Smoothness: { type: Float, default: 0.0, range: [0.0, 1.0] },
-        u_MetallicGlossTexture: { type: Texture2D, options: { define: "METALLICGLOSSTEXTURE" } },
+        //u_MetallicGlossTexture: { type: Texture2D, options: { define: "METALLICGLOSSTEXTURE" } },
 
-        u_OcclusionTexture: { type: Texture2D, options: { define: "OCCLUSIONTEXTURE" } },
+        //u_OcclusionTexture: { type: Texture2D, options: { define: "OCCLUSIONTEXTURE" } },
         u_OcclusionStrength: { type: Float, default: 1.0 },
 
         u_EmissionColor: { type: Color, default: [0, 0, 0, 0] },
         u_EmissionIntensity: { type: Float, default: 1.0 },
-        u_EmissionTexture: { type: Texture2D, options: { define: "EMISSIONTEXTURE" } },
+        //u_EmissionTexture: { type: Texture2D, options: { define: "EMISSIONTEXTURE" } },
 
         u_LOD_scale:{type:Float, default:7.13},
         u_LengthScale0:{type:Float},
         u_LengthScale1:{type:Float},
         u_LengthScale2:{type:Float},
         u_Displacement_c0: {type:Texture2D},
+        u_Displacement_c1: {type:Texture2D},
+        u_Displacement_c2: {type:Texture2D},
+        _SSSBase:{type:Float},
+        _SSSScale:{type:Float},
+        _SSSColor:{type:Color},
+        _SSSStrength:{type:Float},
+
+        _Derivatives_c0:{type:Texture2D},
+        _Derivatives_c1:{type:Texture2D},
+        _Derivatives_c2:{type:Texture2D},
+
+        _Turbulence_c0:{type:Texture2D},
+        _Turbulence_c1:{type:Texture2D},
+        _Turbulence_c2:{type:Texture2D},
+
+        _FoamBiasLOD0:{type:Float},
+        _FoamBiasLOD1:{type:Float},
+        _FoamBiasLOD2:{type:Float},
+
+        _FoamScale:{type:Float},
+        _FoamColor:{type:Color},
+
+
+        
     },
     defines: {
         EMISSION: { type: bool, default: false },
@@ -95,11 +119,18 @@ GLSL Start
         vUVCoords_c2 = vWorldUV / u_LengthScale2;       
 
         displacement += texture2D(u_Displacement_c0, vUVCoords_c0).xyz * lod_c0;
+        largeWavesBias = displacement.y;
+
+        displacement += texture2D(u_Displacement_c1, vUVCoords_c1).xyz * lod_c1;
+        displacement += texture2D(u_Displacement_c2, vUVCoords_c2).xyz * lod_c2;
 
         worldPos.xyz += displacement;
-        //vLodScales = vec4(lod_c0, lod_c1, lod_c2, max(displacement.y - largeWavesBias * 0.8 - _SSSBase, 0) / _SSSScale);
+        vLodScales = vec4(lod_c0, lod_c1, lod_c2, max(displacement.y - largeWavesBias * 0.8 - _SSSBase, 0) / _SSSScale);
         gl_Position = remapPositionZ(worldPos);
 
+        vClipCoords = gl_Position;
+        vMetric = gl_Position.z;
+        
     #ifdef FOG
         FogHandle(gl_Position.z);
     #endif // FOG 
@@ -199,6 +230,20 @@ GLSL Start
         PixelParams pixel;
         getPixelParams(pixel);
 
+        vec4 derivatives = texture2D(_Derivatives_c0, vUVCoords_c0);
+        derivatives += texture2D(_Derivatives_c1, vUVCoords_c1) * vLodScales.y;
+        derivatives += texture2D(_Derivatives_c2, vUVCoords_c2) * vLodScales.z;
+
+        vec2 slope = vec2(derivatives.x / (1.0 + derivatives.z), derivatives.y / (1.0 + derivatives.w));
+        pixel.normalWS = normalize(vec3(-slope.x, 1.0, -slope.y));
+
+        //这个会导致贴图超了16个
+        // float jacobian = texture2D(_Turbulence_c0, vUVCoords_c0).x + texture2D(_Turbulence_c1, vUVCoords_c1).x + texture2D(_Turbulence_c2, vUVCoords_c2).x;
+        // jacobian = min(1.0, max(0.0, (-jacobian + _FoamBiasLOD2) * _FoamScale));
+
+        float jacobian = texture2D(_Turbulence_c0, vUVCoords_c0).x + texture2D(_Turbulence_c1, vUVCoords_c1).x;
+        jacobian = min(1.0, max(0.0, (-jacobian + _FoamBiasLOD1) * _FoamScale));
+
         SurfaceInputs inputs;
         initSurfaceInputs(inputs, pixel);
 
@@ -213,8 +258,9 @@ GLSL Start
         gl_FragColor = outputTransform(gl_FragColor);
         vec2 fuv = fract(pixel.uv0);
         float thick = 0.1;
-        if(fuv.x<thick||fuv.y<thick)
-            gl_FragColor += vec4(1.0,1.0,1.0,1.0);
+        if(fuv.x<thick||fuv.y<thick){
+            //gl_FragColor += vec4(1.0,1.0,1.0,1.0);
+        }
         else{
         }
     }
