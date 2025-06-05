@@ -102,8 +102,7 @@ GLSL Start
         PixelParams pixel;
         initPixelParams(pixel, vertex);
 
-        vec4 worldPos = getPositionCS(pixel.positionWS);
-
+        vec3 worldPos = pixel.positionWS;
         vWorldUV = worldPos.xz;
         vViewVector = u_CameraPos - worldPos.xyz;
         float viewDist = length(vViewVector);
@@ -118,7 +117,7 @@ GLSL Start
         vUVCoords_c1 = vWorldUV / u_LengthScale1;
         vUVCoords_c2 = vWorldUV / u_LengthScale2;       
 
-        displacement += texture2D(u_Displacement_c0, vUVCoords_c0).xyz * lod_c0;
+        displacement += texture2D(u_Displacement_c0, vUVCoords_c0).xyz ;//* lod_c0;
         largeWavesBias = displacement.y;
 
         displacement += texture2D(u_Displacement_c1, vUVCoords_c1).xyz * lod_c1;
@@ -126,7 +125,10 @@ GLSL Start
 
         worldPos.xyz += displacement;
         vLodScales = vec4(lod_c0, lod_c1, lod_c2, max(displacement.y - largeWavesBias * 0.8 - _SSSBase, 0) / _SSSScale);
-        gl_Position = remapPositionZ(worldPos);
+
+        vec4 wPos = getPositionCS(worldPos);
+
+        gl_Position = remapPositionZ(wPos);
 
         vClipCoords = gl_Position;
         vMetric = gl_Position.z;
