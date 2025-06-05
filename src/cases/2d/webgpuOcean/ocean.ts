@@ -30,8 +30,8 @@ export class Ocean extends Script{
         let scene = this.owner.scene as Scene3D;
         let camera = scene._cameraPool[0] as Camera;
         let oceanGeo = this._oceanGeometry = new OceanGeometry(scene,camera);
+        await this._updateSize(256);
         oceanGeo.initializeMeshes();
-        this._updateSize(256);
 
     }
 

@@ -14,6 +14,7 @@ import { Quaternion } from "laya/maths/Quaternion";
 import { Laya } from "Laya";
 import { Transform3D } from "laya/d3/core/Transform3D";
 import { WavesGenerator } from "./WavesGenerator";
+import { FilterMode } from "laya/RenderEngine/RenderEnum/FilterMode";
 
 enum Seams {
     None = 0,   // 无边缘
@@ -166,11 +167,12 @@ export class OceanGeometry {
     async initializeMaterials(wavesGen:WavesGenerator) {
         this._wavesGenerator = wavesGen;
         let mtl:Material = Laya.loader.getRes('ocean/Ocean.lmat');
-        // mtl.setTexture('u_Displacement_c0',wavesGen._cascades[0]._displacement);
-        // mtl.setFloat('u_LOD_scale',7.13);
-        // mtl.setFloat('u_LengthScale0',wavesGen.lengthScale[0]);
-        // mtl.setFloat('u_LengthScale1',wavesGen.lengthScale[1]);
-        // mtl.setFloat('u_LengthScale2',wavesGen.lengthScale[2]);
+        wavesGen._cascades[0]._displacement.filterMode = FilterMode.Point;
+        mtl.setTexture('u_Displacement_c0',wavesGen._cascades[0]._displacement);
+        mtl.setFloat('u_LOD_scale',7.13);
+        mtl.setFloat('u_LengthScale0',wavesGen.lengthScale[0]);
+        mtl.setFloat('u_LengthScale1',wavesGen.lengthScale[1]);
+        mtl.setFloat('u_LengthScale2',wavesGen.lengthScale[2]);
         this._materials=[mtl,mtl,mtl];
     }
 
