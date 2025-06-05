@@ -12,6 +12,7 @@ import { MeshFilter } from "laya/d3/core/MeshFilter";
 import { MeshRenderer } from "laya/d3/core/MeshRenderer";
 import { Quaternion } from "laya/maths/Quaternion";
 import { Laya } from "Laya";
+import { Transform3D } from "laya/d3/core/Transform3D";
 
 enum Seams {
     None = 0,   // 无边缘
@@ -24,10 +25,115 @@ enum Seams {
 
 var UP = new Vector3(0, 1, 0);
 
+class TSR{
+    constructor(
+    public position:Vector3|null,
+    public rotation:Quaternion|null,
+    public scale:Vector3|null){
+    }
+}
+function transformPoint(p:Vector3, transform:TSR){
+    if(!transform)return ;
+    if(transform.rotation) Vector3.transformQuat(p,transform.rotation,p);
+    if(transform.scale) Vector3.multiply(p,transform.scale,p);
+    if(transform.position) p.vadd(transform.position,p);
+    return p;
+}
+function transformNormal(p:Vector3, transform:TSR){
+    if(!transform)return p;
+    if(transform.rotation) Vector3.transformQuat(p,transform.rotation,p);
+    return p;
+}
+/**
+ * @en Merges multiple meshes into one mesh with transforms applied
+ * @zh 合并多个网格到一个网格，并应用对应的变换矩阵
+ * @param meshes 要合并的网格数组
+ * @param transforms 对应的变换矩阵数组
+ * @return 合并后的网格实例
+ */
+function _mergeMesh(meshes: Mesh[], transforms: TSR[]): Mesh {
+    if (meshes.length === 0) {
+        throw new Error("meshes array cannot be empty");
+    }
+    if (meshes.length !== transforms.length) {
+        throw new Error("meshes and transforms arrays must have same length");
+    }
+
+    // 获取第一个网格的顶点声明
+    const vertexDeclaration = meshes[0]._vertexBuffer.vertexDeclaration;
+
+    // 计算总顶点数和索引数
+    let totalVertices = 0;
+    let totalIndices = 0;
+    for (const mesh of meshes) {
+        totalVertices += mesh._vertexCount;
+        totalIndices += mesh._indexBuffer.indexCount;
+    }
+
+    // 创建合并后的顶点和索引数组
+    const mergedVertices = new Float32Array(totalVertices * vertexDeclaration.vertexStride / 4);
+    const mergedIndices = new Uint16Array(totalIndices);
+
+    let vertexOffset = 0;
+    let indexOffset = 0;
+    let vertexCountOffset = 0;
+
+    for (let i = 0; i < meshes.length; i++) {
+        const mesh = meshes[i];
+        const transform = transforms[i];
+
+        // 获取原始顶点数据
+        const vertices = new Float32Array(mesh._vertexCount * vertexDeclaration.vertexStride / 4);
+        vertices.set(mesh._vertexBuffer._float32Reader);    //clone
+
+        // 应用变换到顶点位置和法线
+        const position = new Vector3();
+        const normal = new Vector3();
+        const stride = vertexDeclaration.vertexStride / 4;
+
+        for (let v = 0; v < mesh._vertexCount; v++) {
+            const base = v * stride;
+
+            // 获取位置并应用变换
+            position.set(vertices[base], vertices[base + 1], vertices[base + 2]);
+            transformPoint(position,transform);
+            mergedVertices[vertexOffset + base] = position.x;
+            mergedVertices[vertexOffset + base + 1] = position.y;
+            mergedVertices[vertexOffset + base + 2] = position.z;
+
+            // 获取法线并应用变换
+            normal.set(vertices[base + 3], vertices[base + 4], vertices[base + 5]);
+            transformNormal(normal,transform);
+            mergedVertices[vertexOffset + base + 3] = normal.x;
+            mergedVertices[vertexOffset + base + 4] = normal.y;
+            mergedVertices[vertexOffset + base + 5] = normal.z;
+
+            // 复制UV和其他属性
+            for (let a = 6; a < stride; a++) {
+                mergedVertices[vertexOffset + base + a] = vertices[base + a];
+            }
+        }
+
+        // 获取原始索引数据并调整偏移
+        const indices = mesh._indexBuffer._buffer;
+
+        for (let idx = 0; idx < indices.length; idx++) {
+            mergedIndices[indexOffset + idx] = indices[idx] + vertexCountOffset;
+        }
+
+        vertexOffset += mesh._vertexCount * stride;
+        indexOffset += indices.length;
+        vertexCountOffset += mesh._vertexCount;
+    }
+
+    return PrimitiveMesh._createMesh(vertexDeclaration, mergedVertices, mergedIndices);
+}
+
+
 export class OceanGeometry {
     lengthScale = 15; // float
     vertexDensity = 30; // 1-40 int
-    clipLevels = 0;//8; // 0-8 int
+    clipLevels = 8; // 0-8 int
     skirtSize = 10; // 0-100 float
     useSkirt = false;// true;
     _scene: Scene3D;
@@ -164,25 +270,22 @@ export class OceanGeometry {
 
     _createRingMesh(k: number, lengthScale: number) {
         const m1 = this._createPlaneMesh(2 * k, (k - 1) >> 1, lengthScale, Seams.Bottom | Seams.Right | Seams.Left);
+        const t1:TSR = null;
         const m2 = this._createPlaneMesh(2 * k, (k - 1) >> 1, lengthScale, Seams.Top | Seams.Right | Seams.Left);
-        //m2.position.set(0, 0, (k + 1 + ((k - 1) >> 1)) * lengthScale);
+        const t2 = new TSR(new Vector3(0, 0, (k + 1 + ((k - 1) >> 1)) * lengthScale),null,null);
         const m3 = this._createPlaneMesh((k - 1) >> 1, k + 1, lengthScale, Seams.Left);
-        // m3.position.set(0, 0, ((k - 1) >> 1) * lengthScale);
+        const t3 = new TSR(new Vector3(0, 0, ((k - 1) >> 1) * lengthScale),null,null);
         const m4 = this._createPlaneMesh((k - 1) >> 1, k + 1, lengthScale, Seams.Right);
-        // m4.position.set((k + 1 + ((k - 1) >> 1)) * lengthScale, 0, ((k - 1) >> 1) * lengthScale);
-        // return BABYLON.Mesh.MergeMeshes([m1, m2, m3, m4], true, true);
-        return null;
+        const t4 = new TSR(new Vector3((k + 1 + ((k - 1) >> 1)) * lengthScale, 0, ((k - 1) >> 1) * lengthScale),null,null);
+        return _mergeMesh([m1,m2,m3,m4],[t1,t2,t3,t4]);
     }
 
     _createTrimMesh(k: number, lengthScale: number) {
         const m1 = this._createPlaneMesh(k + 1, 1, lengthScale, Seams.None, 1);
-        // m1.position.set((-k - 1) * lengthScale, 0, -1 * lengthScale);
+        const t1 = new TSR(new Vector3((-k - 1) * lengthScale, 0, -1 * lengthScale), null, null);
         const m2 = this._createPlaneMesh(1, k, lengthScale, Seams.None, 1);
-        // m2.position.set(-1 * lengthScale, 0, (-k - 1) * lengthScale);
-        // const mesh = BABYLON.Mesh.MergeMeshes([m1, m2], true, true);
-        // mesh.rotationQuaternion = new BABYLON.Quaternion();
-        // return mesh;
-        return null;
+        const t2 = new TSR(new Vector3(-1 * lengthScale, 0, (-k - 1) * lengthScale), null, null);
+        return _mergeMesh([m1,m2],[t1,t2]);
     }
 
     _createSkirtMesh(k: number, outerBorderScale: number) {
@@ -275,6 +378,9 @@ export class OceanGeometry {
         let scale = this._clipLevelScale(-1, activeLevels);
         this._snap(previousSnappedPosition, scale * 2);
         this._offsetFromCenter(-1, activeLevels, centerOffset);
+
+        if(!this._center)
+            return;
 
         //center的移动和缩放
         let curPos = this._center.transform.position;
