@@ -25,6 +25,12 @@ Shader3D Start
         u_EmissionColor: { type: Color, default: [0, 0, 0, 0] },
         u_EmissionIntensity: { type: Float, default: 1.0 },
         u_EmissionTexture: { type: Texture2D, options: { define: "EMISSIONTEXTURE" } },
+
+        u_LOD_scale:{type:Float, default:7.13},
+        u_LengthScale0:{type:Float},
+        u_LengthScale1:{type:Float},
+        u_LengthScale2:{type:Float},
+        u_Displacement_c0: {type:Texture2D},
     },
     defines: {
         EMISSION: { type: bool, default: false },
@@ -55,6 +61,14 @@ GLSL Start
     #include "VertexCommon.glsl";
 
     #include "PBRVertex.glsl";
+    varying vec2 vWorldUV;
+    varying vec2 vUVCoords_c0;
+    varying vec2 vUVCoords_c1;
+    varying vec2 vUVCoords_c2;
+    varying vec3 vViewVector;
+    varying vec4 vLodScales;
+    varying vec4 vClipCoords;
+    varying float vMetric;
 
     void main()
     {
@@ -64,9 +78,27 @@ GLSL Start
         PixelParams pixel;
         initPixelParams(pixel, vertex);
 
-        gl_Position = getPositionCS(pixel.positionWS);
+        vec4 worldPos = getPositionCS(pixel.positionWS);
 
-        gl_Position = remapPositionZ(gl_Position);
+        vWorldUV = worldPos.xz;
+        vViewVector = u_CameraPos - worldPos.xyz;
+        float viewDist = length(vViewVector);
+    
+        float lod_c0 = min(u_LOD_scale * u_LengthScale0 / viewDist, 1.0);
+        float lod_c1 = min(u_LOD_scale * u_LengthScale1 / viewDist, 1.0);
+        float lod_c2 = min(u_LOD_scale * u_LengthScale2 / viewDist, 1.0);
+
+        vec3 displacement = vec3(0.);
+        float largeWavesBias = 0.;
+        vUVCoords_c0 = vWorldUV / u_LengthScale0;
+        vUVCoords_c1 = vWorldUV / u_LengthScale1;
+        vUVCoords_c2 = vWorldUV / u_LengthScale2;       
+
+        displacement += texture2D(u_Displacement_c0, vUVCoords_c0).xyz * lod_c0;
+
+        worldPos.xyz += displacement;
+        //vLodScales = vec4(lod_c0, lod_c1, lod_c2, max(displacement.y - largeWavesBias * 0.8 - _SSSBase, 0) / _SSSScale);
+        gl_Position = remapPositionZ(worldPos);
 
     #ifdef FOG
         FogHandle(gl_Position.z);
@@ -86,6 +118,15 @@ GLSL Start
     #include "Sprite3DFrag.glsl";
 
     #include "PBRMetallicFrag.glsl";
+
+    varying vec2 vWorldUV;
+    varying vec2 vUVCoords_c0;
+    varying vec2 vUVCoords_c1;
+    varying vec2 vUVCoords_c2;
+    varying vec3 vViewVector;
+    varying vec4 vLodScales;
+    varying vec4 vClipCoords;
+    varying float vMetric;    
 
     void initSurfaceInputs(inout SurfaceInputs inputs, inout PixelParams pixel)
     {
@@ -173,9 +214,8 @@ GLSL Start
         vec2 fuv = fract(pixel.uv0);
         float thick = 0.1;
         if(fuv.x<thick||fuv.y<thick)
-            gl_FragColor = vec4(1.0,1.0,1.0,1.0);
+            gl_FragColor += vec4(1.0,1.0,1.0,1.0);
         else{
-            gl_FragColor = vec4(.0,.0,.0,.0);
         }
     }
 #endGLSL

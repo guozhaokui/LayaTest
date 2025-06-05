@@ -167,7 +167,6 @@ export class OceanGeometry {
     async initializeMaterials(wavesGen:WavesGenerator) {
         this._wavesGenerator = wavesGen;
         let mtl:Material = Laya.loader.getRes('ocean/Ocean.lmat');
-        wavesGen._cascades[0]._displacement.filterMode = FilterMode.Point;
         mtl.setTexture('u_Displacement_c0',wavesGen._cascades[0]._displacement);
         mtl.setFloat('u_LOD_scale',7.13);
         mtl.setFloat('u_LengthScale0',wavesGen.lengthScale[0]);
