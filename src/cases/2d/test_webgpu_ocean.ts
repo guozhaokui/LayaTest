@@ -824,7 +824,7 @@ async function test() {
     Laya.stage.addChild(scene);
 
     // 创建摄像机
-    let camera: Camera = <Camera>scene.addChild(new Camera(0, 0.1, 100));
+    let camera: Camera = <Camera>scene.addChild(new Camera(0, 1, 1000));
     camera.transform.translate(new Vector3(0, 3, 5));
     camera.transform.rotate(new Vector3(-30, 0, 0), true, false);
 

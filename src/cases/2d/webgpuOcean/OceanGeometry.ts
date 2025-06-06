@@ -16,6 +16,9 @@ import { Transform3D } from "laya/d3/core/Transform3D";
 import { WavesGenerator } from "./WavesGenerator";
 import { FilterMode } from "laya/RenderEngine/RenderEnum/FilterMode";
 import { Color } from "laya/maths/Color";
+import { Vector4 } from "laya/maths/Vector4";
+import { Texture2D } from "laya/resource/Texture2D";
+import { TextureFormat } from "laya/RenderEngine/RenderEnum/TextureFormat";
 
 enum Seams {
     None = 0,   // 无边缘
@@ -149,6 +152,8 @@ export class OceanGeometry {
     _skirt: Sprite3D;
     _wavesGenerator:WavesGenerator;
     _trimRotations: Quaternion[] = [new Quaternion(), new Quaternion(), new Quaternion(), new Quaternion()];
+    _foamTexture:Texture2D;
+    _lightDir=new Vector3(0,1,0);
 
 
     constructor(scene: Scene3D, camera: Camera) {
@@ -168,6 +173,7 @@ export class OceanGeometry {
     async initializeMaterials(wavesGen:WavesGenerator) {
         this._wavesGenerator = wavesGen;
         let mtl:Material = Laya.loader.getRes('ocean/Ocean.lmat');
+        this._foamTexture = await Laya.loader.load('ocean/waterFoam_circular_mask.png') as Texture2D;
         mtl.setTexture('u_Displacement_c0',wavesGen._cascades[0]._displacement);
         mtl.setTexture('u_Displacement_c1',wavesGen._cascades[1]._displacement);
         mtl.setTexture('u_Displacement_c2',wavesGen._cascades[2]._displacement);
@@ -175,6 +181,7 @@ export class OceanGeometry {
         mtl.setFloat('u_LengthScale0',wavesGen.lengthScale[0]);
         mtl.setFloat('u_LengthScale1',wavesGen.lengthScale[1]);
         mtl.setFloat('u_LengthScale2',wavesGen.lengthScale[2]);
+        mtl.setColor('_Color', new Color(0x21/255, 0x45/255, 0x59/255,1.0));
         mtl.setFloat('_SSSBase',-0.261);
         mtl.setFloat('_SSSStrength',0.15);
         mtl.setFloat('_SSSScale',4.7);
@@ -194,6 +201,19 @@ export class OceanGeometry {
 
         mtl.setFloat('_FoamScale',2.4);
         mtl.setColor('_FoamColor', new Color(1,1,1,1));
+
+        mtl.setFloat('_ContactFoam',1);
+        mtl.setFloat('_MaxGloss',0.9);
+        mtl.setFloat('_RoughnessScale',0.0044);
+
+        mtl.setTexture('_FoamTexture', this._foamTexture);
+        
+        let tmpTex = new Texture2D(4,4,TextureFormat.R8G8B8A8,{});
+        mtl.setTexture('_CameraDepthTexture',tmpTex);
+        mtl.setVector4('_CameraData', new Vector4(1,1000,1000-1,0));    //camera.minz,maxz,max-min,0
+        mtl.setFloat('_Time',0);
+        mtl.setVector3('_WorldSpaceCameraPos',this._camera.transform.position);
+        mtl.setVector3('lightDirection',this._lightDir);
 
         this._materials=[mtl,mtl,mtl];
     }
@@ -467,8 +487,16 @@ export class OceanGeometry {
         }
     }
 
+    _startTime = Date.now();
     _updateMaterials() {
         const activeLevels = this._activeLodLevels;
+        const time = ((Date.now() / 1000) - this._startTime) / 10;
         //更新center,ring,trims,skirt的材质，可以先不更新
+        let mtl = this._materials[0];
+        if(!mtl)
+            return;
+        mtl.setFloat('_Time',time);
+        mtl.setVector3('_WorldSpaceCameraPos',this._camera.transform.position);
+        
     }
 }

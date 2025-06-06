@@ -8,11 +8,6 @@ Shader3D Start
         u_AlphaTestValue: { type: Float, default: 0.5, range: [0.0, 1.0] },
 
         u_TilingOffset: { type: Vector4, default: [1, 1, 0, 0] },
-
-        u_AlbedoColor: { type: Color, default: [1, 1, 1, 1] },
-        //u_AlbedoTexture: { type: Texture2D, options: { define: "ALBEDOTEXTURE" } },
-
-        //u_NormalTexture: { type: Texture2D, options: { define: "NORMALTEXTURE" } },
         u_NormalScale: { type: Float, default: 1.0, range: [0.0, 2.0] },
 
         u_Metallic: { type: Float, default: 0.0, range: [0.0, 1.0] },
@@ -26,6 +21,7 @@ Shader3D Start
         u_EmissionIntensity: { type: Float, default: 1.0 },
         //u_EmissionTexture: { type: Texture2D, options: { define: "EMISSIONTEXTURE" } },
 
+        _Color:{type:Color},
         u_LOD_scale:{type:Float, default:7.13},
         u_LengthScale0:{type:Float},
         u_LengthScale1:{type:Float},
@@ -53,7 +49,16 @@ Shader3D Start
         _FoamScale:{type:Float},
         _FoamColor:{type:Color},
 
+        _ContactFoam:{type:Float},
+        _MaxGloss:{type:Float},
 
+        _RoughnessScale:{type:Float},
+        _FoamTexture:{type:Texture2D},
+        _CameraDepthTexture:{type:Texture2D},
+        _CameraData:{type:Vector4},
+        _Time:{type:Float},
+        _WorldSpaceCameraPos:{type:Vector3},
+        lightDirection:{type:Vector3},
         
     },
     defines: {
@@ -104,7 +109,7 @@ GLSL Start
 
         vec3 worldPos = pixel.positionWS;
         vWorldUV = worldPos.xz;
-        vViewVector = u_CameraPos - worldPos.xyz;
+        vViewVector = _WorldSpaceCameraPos - worldPos.xyz;
         float viewDist = length(vViewVector);
     
         float lod_c0 = min(u_LOD_scale * u_LengthScale0 / viewDist, 1.0);
@@ -120,8 +125,8 @@ GLSL Start
         displacement += texture2D(u_Displacement_c0, vUVCoords_c0).xyz ;//* lod_c0;
         largeWavesBias = displacement.y;
 
-        displacement += texture2D(u_Displacement_c1, vUVCoords_c1).xyz * lod_c1;
-        displacement += texture2D(u_Displacement_c2, vUVCoords_c2).xyz * lod_c2;
+        //displacement += texture2D(u_Displacement_c1, vUVCoords_c1).xyz * lod_c1;
+        //displacement += texture2D(u_Displacement_c2, vUVCoords_c2).xyz * lod_c2;
 
         worldPos.xyz += displacement;
         vLodScales = vec4(lod_c0, lod_c1, lod_c2, max(displacement.y - largeWavesBias * 0.8 - _SSSBase, 0) / _SSSScale);
@@ -164,31 +169,8 @@ GLSL Start
     void initSurfaceInputs(inout SurfaceInputs inputs, inout PixelParams pixel)
     {
         inputs.alphaTest = u_AlphaTestValue;
-
-    #ifdef UV
-        vec2 uv = transformUV(pixel.uv0, u_TilingOffset);
-    #else // UV
-        vec2 uv = vec2(0.0);
-    #endif // UV
-
-        inputs.diffuseColor = u_AlbedoColor.rgb;
-        inputs.alpha = u_AlbedoColor.a;
-
-    #ifdef COLOR
-        #ifdef ENABLEVERTEXCOLOR
-        inputs.diffuseColor *= pixel.vertexColor.xyz;
-        inputs.alpha *= pixel.vertexColor.a;
-        #endif // ENABLEVERTEXCOLOR
-    #endif // COLOR
-
-    #ifdef ALBEDOTEXTURE
-        vec4 albedoSampler = texture2D(u_AlbedoTexture, uv);
-        #ifdef Gamma_u_AlbedoTexture
-        albedoSampler = gammaToLinear(albedoSampler);
-        #endif // Gamma_u_AlbedoTexture
-        inputs.diffuseColor *= albedoSampler.rgb;
-        inputs.alpha *= albedoSampler.a;
-    #endif // ALBEDOTEXTURE
+        // inputs.diffuseColor = u_AlbedoColor.rgb;
+        // inputs.alpha = u_AlbedoColor.a;
 
         inputs.normalTS = vec3(0.0, 0.0, 1.0);
     #ifdef NORMALTEXTURE
@@ -201,36 +183,15 @@ GLSL Start
         inputs.metallic = u_Metallic;
         inputs.smoothness = u_Smoothness;
 
-    #ifdef METALLICGLOSSTEXTURE
-        vec4 metallicSampler = texture2D(u_MetallicGlossTexture, uv);
-        inputs.metallic = metallicSampler.x;
-        inputs.smoothness = (metallicSampler.a * u_Smoothness);
-    #endif // METALLICGLOSSTEXTURE
-
         inputs.occlusion = 1.0;
-    #ifdef OCCLUSIONTEXTURE
-        vec4 occlusionSampler = texture2D(u_OcclusionTexture, uv);
-        float occlusion = occlusionSampler.g;
-        inputs.occlusion = (1.0 - u_OcclusionStrength) + occlusion * u_OcclusionStrength;
-    #endif // OCCLUSIONTEXTURE
-
         inputs.emissionColor = vec3(0.0);
-    #ifdef EMISSION
-        inputs.emissionColor = u_EmissionColor.rgb * u_EmissionIntensity;
-        #ifdef EMISSIONTEXTURE
-        vec4 emissionSampler = texture2D(u_EmissionTexture, uv);
-        #ifdef Gamma_u_EmissionTexture
-        emissionSampler = gammaToLinear(emissionSampler);
-        #endif // Gamma_u_EmissionTexture
-        inputs.emissionColor *= emissionSampler.rgb;
-        #endif // EMISSIONTEXTURE
-    #endif // EMISSION
     }
 
     void main()
     {
         PixelParams pixel;
         getPixelParams(pixel);
+        SurfaceInputs inputs;
 
         vec4 derivatives = texture2D(_Derivatives_c0, vUVCoords_c0);
         derivatives += texture2D(_Derivatives_c1, vUVCoords_c1) * vLodScales.y;
@@ -246,10 +207,39 @@ GLSL Start
         float jacobian = texture2D(_Turbulence_c0, vUVCoords_c0).x + texture2D(_Turbulence_c1, vUVCoords_c1).x;
         jacobian = min(1.0, max(0.0, (-jacobian + _FoamBiasLOD1) * _FoamScale));
 
-        SurfaceInputs inputs;
+        vec2 screenUV = vClipCoords.xy / vClipCoords.w;
+        screenUV = screenUV * 0.5 + 0.5;
+        float backgroundDepth = texture2D(_CameraDepthTexture, screenUV).r * _CameraData.y;
+        float surfaceDepth = vMetric;
+        float depthDifference = max(0.0, (backgroundDepth - surfaceDepth) - 0.5);
+        float foam = texture2D(_FoamTexture, vWorldUV * 0.5 + _Time * 2.).r;
+        jacobian += _ContactFoam * saturate(max(0.0, foam - depthDifference) * 5.0) * 0.9;
+
+        vec3 surfaceAlbedo = mix(vec3(0.0), _FoamColor.rgb, jacobian);
+
+        vec3 viewDir = normalize(vViewVector);
+        vec3 H = normalize(-pixel.normalWS + lightDirection);
+        float ViewDotH = pow5(saturate(dot(viewDir, -H))) * 30.0 * _SSSStrength;
+        vec3 color = mix(_Color.rgb, saturate(_Color.rgb + _SSSColor.rgb * ViewDotH * vLodScales.w), vLodScales.z);
+
+        float fresnel = dot(pixel.normalWS, viewDir);
+        fresnel = saturate(1.0 - fresnel);
+        fresnel = pow5(fresnel);
+
         initSurfaceInputs(inputs, pixel);
+        //...
+        float distanceGloss = mix(1.0 - 0.5/*metallicRoughness.g*/, _MaxGloss, 1.0 / (1.0 + length(vViewVector) * _RoughnessScale));
+        //metallicRoughness.g = 1.0 - mix(distanceGloss, 0.0, jacobian);
+        inputs.smoothness = mix(distanceGloss, 0.0, jacobian);
+        //...
+        vec3 finalEmissive = mix(color * (1.0 - fresnel), vec3(0.0), jacobian);
+        
+        
+        inputs.diffuseColor = surfaceAlbedo.rgb;
+        inputs.alpha = 1.0;
 
         vec4 surfaceColor = PBR_Metallic_Flow(inputs, pixel);
+        surfaceColor.rgb += finalEmissive;
         
     #ifdef FOG
         surfaceColor.rgb = sceneLitFog(surfaceColor.rgb);
