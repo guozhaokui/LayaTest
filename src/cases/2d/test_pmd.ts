@@ -187,7 +187,7 @@ async function test(){
 
     //左つま先ＩＫ  足尖
     //ikcomp.setTarget(ikcomp.addChainByBoneName('左つま先',2,true), new IK_Target( mmdsp.getBone('左つま先ＩＫ') ));
-    ikcomp.setTarget(ikcomp.addChainByBoneName('右つま先',2,true), new IK_Target( mmdsp.getBone('右つま先ＩＫ') ));
+    //ikcomp.setTarget(ikcomp.addChainByBoneName('右つま先',2,true), new IK_Target( mmdsp.getBone('右つま先ＩＫ') ));
 
     let sp3 = new Sprite3D();
 {

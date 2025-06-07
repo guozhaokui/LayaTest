@@ -34,6 +34,7 @@ import { TextureFormat } from "laya/RenderEngine/RenderEnum/TextureFormat";
 import { MyComputeShader } from "./webgpuOcean/MyComputeShader";
 import { Ocean } from "./webgpuOcean/ocean";
 import { CameraController1 } from "./webgpuOcean/CameraController1";
+import { DepthTextureMode } from "laya/resource/RenderTexture";
 
 function useWebGPU(){
     LayaGL.renderDeviceFactory = new WebGPURenderDeviceFactory();
@@ -825,6 +826,7 @@ async function test() {
 
     // 创建摄像机
     let camera: Camera = <Camera>scene.addChild(new Camera(0, 1, 1000));
+    camera.depthTextureMode = DepthTextureMode.Depth;
     camera.transform.translate(new Vector3(0, 3, 5));
     camera.transform.rotate(new Vector3(-30, 0, 0), true, false);
 
@@ -836,7 +838,7 @@ async function test() {
     dircom.color.setValue(1, 1, 1, 1);
 
     // 创建立方体
-    let sp3d = createMeshSprite(PrimitiveMesh.createBox(0.1,0.1,0.1),new Color(1,1,0,1));
+    let sp3d = createMeshSprite(PrimitiveMesh.createBox(0.1,0.1,0.1),new Color(1,1,1,1));
     scene.addChild(sp3d);
     
     camera.addComponent(CameraController1)

@@ -54,7 +54,6 @@ Shader3D Start
 
         _RoughnessScale:{type:Float},
         _FoamTexture:{type:Texture2D},
-        _CameraDepthTexture:{type:Texture2D},
         _CameraData:{type:Vector4},
         _Time:{type:Float},
         _WorldSpaceCameraPos:{type:Vector3},
@@ -125,8 +124,8 @@ GLSL Start
         displacement += texture2D(u_Displacement_c0, vUVCoords_c0).xyz ;//* lod_c0;
         largeWavesBias = displacement.y;
 
-        //displacement += texture2D(u_Displacement_c1, vUVCoords_c1).xyz * lod_c1;
-        //displacement += texture2D(u_Displacement_c2, vUVCoords_c2).xyz * lod_c2;
+        displacement += texture2D(u_Displacement_c1, vUVCoords_c1).xyz * lod_c1;
+        displacement += texture2D(u_Displacement_c2, vUVCoords_c2).xyz * lod_c2;
 
         worldPos.xyz += displacement;
         vLodScales = vec4(lod_c0, lod_c1, lod_c2, max(displacement.y - largeWavesBias * 0.8 - _SSSBase, 0) / _SSSScale);
@@ -173,12 +172,6 @@ GLSL Start
         // inputs.alpha = u_AlbedoColor.a;
 
         inputs.normalTS = vec3(0.0, 0.0, 1.0);
-    #ifdef NORMALTEXTURE
-         vec3 normalSampler = texture2D(u_NormalTexture, uv).rgb;
-        normalSampler = normalize(normalSampler * 2.0 - 1.0);
-        normalSampler.y *= -1.0;
-        inputs.normalTS = normalScale(normalSampler, u_NormalScale);
-    #endif
 
         inputs.metallic = u_Metallic;
         inputs.smoothness = u_Smoothness;
@@ -209,10 +202,10 @@ GLSL Start
 
         vec2 screenUV = vClipCoords.xy / vClipCoords.w;
         screenUV = screenUV * 0.5 + 0.5;
-        float backgroundDepth = texture2D(_CameraDepthTexture, screenUV).r * _CameraData.y;
+        float backgroundDepth = texture2D(u_CameraDepthTexture, screenUV).r * _CameraData.y;
         float surfaceDepth = vMetric;
         float depthDifference = max(0.0, (backgroundDepth - surfaceDepth) - 0.5);
-        float foam = texture2D(_FoamTexture, vWorldUV * 0.5 + _Time * 2.).r;
+        float foam = 0.0;// texture2D(_FoamTexture, vWorldUV * 0.5 + _Time * 2.).r;
         jacobian += _ContactFoam * saturate(max(0.0, foam - depthDifference) * 5.0) * 0.9;
 
         vec3 surfaceAlbedo = mix(vec3(0.0), _FoamColor.rgb, jacobian);
