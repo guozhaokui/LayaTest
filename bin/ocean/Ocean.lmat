@@ -3,7 +3,7 @@
   "props": {
     "textures": [],
     "type": "Ocean",
-    "renderQueue": 2000,
+    "renderQueue": 3000,
     "materialRenderMode": 0,
     "u_AlphaTestValue": 0.5,
     "s_Cull": 0,

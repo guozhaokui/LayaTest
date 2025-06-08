@@ -19,6 +19,7 @@ import { Color } from "laya/maths/Color";
 import { Vector4 } from "laya/maths/Vector4";
 import { Texture2D } from "laya/resource/Texture2D";
 import { TextureFormat } from "laya/RenderEngine/RenderEnum/TextureFormat";
+import { Bounds } from "laya/d3/math/Bounds";
 
 enum Seams {
     None = 0,   // 无边缘
@@ -153,7 +154,8 @@ export class OceanGeometry {
     _wavesGenerator:WavesGenerator;
     _trimRotations: Quaternion[] = [new Quaternion(), new Quaternion(), new Quaternion(), new Quaternion()];
     _foamTexture:Texture2D;
-    _lightDir= (new Vector3(0,-1,1)).normalize();
+    //_lightDir= (new Vector3(0,-1,1)).normalize();
+    _lightDir = new Vector3(0,-1,0);
 
 
     constructor(scene: Scene3D, camera: Camera) {
@@ -246,6 +248,8 @@ export class OceanGeometry {
         boxfilter.sharedMesh = mesh;
         this._root.addChild(sp3d);
         boxrender.sharedMaterial = mat;
+        let v = 10000,nv=-10000;
+        boxrender.geometryBounds = new Bounds(new Vector3(nv,nv,nv),new Vector3(v,v,v));
         boxrender.receiveShadow = true;
         //mesh.receiveShadows = true;
         return sp3d;

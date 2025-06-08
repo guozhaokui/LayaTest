@@ -827,8 +827,9 @@ async function test() {
     // 创建摄像机
     let camera: Camera = <Camera>scene.addChild(new Camera(0, 1, 1000));
     camera.depthTextureMode = DepthTextureMode.Depth;
-    camera.transform.translate(new Vector3(0, 3, 5));
-    camera.transform.rotate(new Vector3(-30, 0, 0), true, false);
+    camera.fieldOfView = 45;
+    camera.transform.translate(new Vector3(0, 5, 0));
+    camera.transform.rotate(new Vector3(-45, 0, 0), true, false);
 
     // 创建平行光
     let directlightSprite = new Sprite3D();
@@ -838,7 +839,7 @@ async function test() {
     dircom.color.setValue(1, 1, 1, 1);
 
     // 创建立方体
-    let sp3d = createMeshSprite(PrimitiveMesh.createBox(0.1,0.1,0.1),new Color(1,1,1,1));
+    let sp3d = createMeshSprite(PrimitiveMesh.createBox(10,20,10),new Color(1,1,1,1));
     scene.addChild(sp3d);
     
     camera.addComponent(CameraController1)

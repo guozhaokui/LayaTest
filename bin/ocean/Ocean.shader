@@ -194,11 +194,11 @@ GLSL Start
         pixel.normalWS = normalize(vec3(-slope.x, 1.0, -slope.y));
 
         //这个会导致贴图超了16个
-        // float jacobian = texture2D(_Turbulence_c0, vUVCoords_c0).x + texture2D(_Turbulence_c1, vUVCoords_c1).x + texture2D(_Turbulence_c2, vUVCoords_c2).x;
-        // jacobian = min(1.0, max(0.0, (-jacobian + _FoamBiasLOD2) * _FoamScale));
+        float jacobian = texture2D(_Turbulence_c0, vUVCoords_c0).x + texture2D(_Turbulence_c1, vUVCoords_c1).x + texture2D(_Turbulence_c2, vUVCoords_c2).x;
+        jacobian = min(1.0, max(0.0, (-jacobian + _FoamBiasLOD2) * _FoamScale));
 
-        float jacobian = texture2D(_Turbulence_c0, vUVCoords_c0).x + texture2D(_Turbulence_c1, vUVCoords_c1).x;
-        jacobian = min(1.0, max(0.0, (-jacobian + _FoamBiasLOD1) * _FoamScale));
+        //float jacobian = texture2D(_Turbulence_c0, vUVCoords_c0).x + texture2D(_Turbulence_c1, vUVCoords_c1).x;
+        //jacobian = min(1.0, max(0.0, (-jacobian + _FoamBiasLOD1) * _FoamScale));
 
         vec2 screenUV = vClipCoords.xy / vClipCoords.w;
         screenUV = screenUV * 0.5 + 0.5;
@@ -239,15 +239,9 @@ GLSL Start
     // #endif // FOG
 
         gl_FragColor = surfaceColor;
-
-        gl_FragColor = outputTransform(gl_FragColor);
-        vec2 fuv = fract(pixel.uv0);
-        float thick = 0.1;
-        if(fuv.x<thick||fuv.y<thick){
-            //gl_FragColor += vec4(1.0,1.0,1.0,1.0);
-        }
-        else{
-        }
+        //gl_FragColor = vec4(vec3(inputs.smoothness),1.0);
+        //由于127变成187了，所以先转到gamma空间，后面可能有反转gamma
+        gl_FragColor.rgb = pow(gl_FragColor.rgb,vec3(2.2));
     }
 #endGLSL
 
