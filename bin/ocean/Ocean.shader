@@ -234,9 +234,9 @@ GLSL Start
         vec4 surfaceColor = PBR_Metallic_Flow(inputs, pixel);
         surfaceColor.rgb += finalEmissive;
         
-    // #ifdef FOG
-    //     surfaceColor.rgb = sceneLitFog(surfaceColor.rgb);
-    // #endif // FOG
+    #ifdef FOG
+        surfaceColor.rgb = sceneLitFog(surfaceColor.rgb);
+    #endif // FOG
 
         gl_FragColor = surfaceColor;
         //gl_FragColor = vec4(vec3(inputs.smoothness),1.0);
