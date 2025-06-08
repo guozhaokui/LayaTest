@@ -4,6 +4,18 @@ import { WavesCascade } from "./WavesCascade";
 import { WavesSettings } from "./WavesSettings";
 import { TextureFormat } from "laya/RenderEngine/RenderEnum/TextureFormat";
 
+function mulberry32(seed:number) {
+  return function() {
+    seed |= 0;
+    seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296; // 返回 [0, 1) 之间的浮点数
+  };
+}
+
+const random = mulberry32(12345); //Math.random
+
 export class WavesGenerator {
     _fft: FFT;
     _startTime: number;
@@ -16,6 +28,7 @@ export class WavesGenerator {
     constructor(size: number, wavesSettings: WavesSettings) {
         this._wavesSettings = wavesSettings;
         this._fft = new FFT(size);
+        
         this._noise = this.genNoiseTex(size);
         this._startTime = new Date().getTime() / 1000;
         this._cascades = [
@@ -26,7 +39,7 @@ export class WavesGenerator {
     }
 
     _normalRandom() {
-        return Math.cos(2 * Math.PI * Math.random()) * Math.sqrt(-2 * Math.log(Math.random()));
+        return Math.cos(2 * Math.PI * random()) * Math.sqrt(-2 * Math.log(random()));
     }
 
     genNoiseTex(size:number) {

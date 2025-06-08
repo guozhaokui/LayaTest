@@ -53,7 +53,7 @@ Shader3D Start
         _MaxGloss:{type:Float},
 
         _RoughnessScale:{type:Float},
-        _FoamTexture:{type:Texture2D},
+        //_FoamTexture:{type:Texture2D},
         _CameraData:{type:Vector4},
         _Time:{type:Float},
         _WorldSpaceCameraPos:{type:Vector3},
@@ -205,8 +205,8 @@ GLSL Start
         float backgroundDepth = texture2D(u_CameraDepthTexture, screenUV).r * _CameraData.y;
         float surfaceDepth = vMetric;
         float depthDifference = max(0.0, (backgroundDepth - surfaceDepth) - 0.5);
-        float foam = 0.0;// texture2D(_FoamTexture, vWorldUV * 0.5 + _Time * 2.).r;
-        jacobian += _ContactFoam * saturate(max(0.0, foam - depthDifference) * 5.0) * 0.9;
+        //float foam = 0.0;// texture2D(_FoamTexture, vWorldUV * 0.5 + _Time * 2.).r;
+        jacobian += _ContactFoam * saturate(max(0.0, 1.0 - depthDifference) * 5.0) * 0.9;
 
         vec3 surfaceAlbedo = mix(vec3(0.0), _FoamColor.rgb, jacobian);
 
@@ -234,9 +234,9 @@ GLSL Start
         vec4 surfaceColor = PBR_Metallic_Flow(inputs, pixel);
         surfaceColor.rgb += finalEmissive;
         
-    #ifdef FOG
-        surfaceColor.rgb = sceneLitFog(surfaceColor.rgb);
-    #endif // FOG
+    // #ifdef FOG
+    //     surfaceColor.rgb = sceneLitFog(surfaceColor.rgb);
+    // #endif // FOG
 
         gl_FragColor = surfaceColor;
 

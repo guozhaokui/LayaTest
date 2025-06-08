@@ -153,7 +153,7 @@ export class OceanGeometry {
     _wavesGenerator:WavesGenerator;
     _trimRotations: Quaternion[] = [new Quaternion(), new Quaternion(), new Quaternion(), new Quaternion()];
     _foamTexture:Texture2D;
-    _lightDir=new Vector3(0,1,0);
+    _lightDir= (new Vector3(0,-1,1)).normalize();
 
 
     constructor(scene: Scene3D, camera: Camera) {
@@ -174,7 +174,7 @@ export class OceanGeometry {
         this._wavesGenerator = wavesGen;
         await Laya.loader.load('ocean/Ocean.shader')
         let mtl:Material = await Laya.loader.load('ocean/Ocean.lmat');
-        this._foamTexture = await Laya.loader.load('ocean/waterFoam_circular_mask.png') as Texture2D;
+        //this._foamTexture = await Laya.loader.load('ocean/waterFoam_circular_mask.png') as Texture2D;
         mtl.setTexture('u_Displacement_c0',wavesGen._cascades[0]._displacement);
         mtl.setTexture('u_Displacement_c1',wavesGen._cascades[1]._displacement);
         mtl.setTexture('u_Displacement_c2',wavesGen._cascades[2]._displacement);
@@ -207,7 +207,7 @@ export class OceanGeometry {
         mtl.setFloat('_MaxGloss',0.9);
         mtl.setFloat('_RoughnessScale',0.0044);
 
-        mtl.setTexture('_FoamTexture', this._foamTexture);
+        //mtl.setTexture('_FoamTexture', this._foamTexture);
         
         //mtl.setTexture('_CameraDepthTexture',tmpTex);
         mtl.setVector4('_CameraData', new Vector4(1,1000,1000-1,0));    //camera.minz,maxz,max-min,0
