@@ -35,6 +35,7 @@ import { MyComputeShader } from "./webgpuOcean/MyComputeShader";
 import { Ocean } from "./webgpuOcean/ocean";
 import { CameraController1 } from "./webgpuOcean/CameraController1";
 import { DepthTextureMode } from "laya/resource/RenderTexture";
+import { CameraTrack } from "./webgpuOcean/CameraTrack";
 
 function useWebGPU(){
     LayaGL.renderDeviceFactory = new WebGPURenderDeviceFactory();
@@ -775,6 +776,19 @@ struct Params {
     return tex1;
 }
 
+function createKeyCamera(time:number|string,pos:Vector3, dir:Vector3, vof:number){
+    let camera = new Camera(0, 1, 1000);
+    camera.name = 'camera_'+time;
+    camera.depthTextureMode = DepthTextureMode.Depth;
+    camera.fieldOfView = vof;
+    camera.transform.position = pos;
+    let target = new Vector3();
+    pos.vadd(dir.scale(100,new Vector3()),target);
+    camera.transform.lookAt(target,new Vector3(0,1,0));
+    camera.active = false;
+    return camera;
+}
+
 async function test() {
     //初始化引擎
     useWebGPU();    
@@ -847,6 +861,14 @@ async function test() {
     //imgMask.source = new Texture(t1);
     let ocean = sp3d.addComponent(Ocean)
     //ocean._updateSize(256);
+
+    let camTrack = new Sprite3D();
+    camTrack.addChild(createKeyCamera(0,new Vector3(0,5,0), new Vector3(0,0,-1), 45));
+    camTrack.addChild(createKeyCamera(1000,new Vector3(10,5,0), new Vector3(0,0,-1), 45));
+    camTrack.addChild(createKeyCamera(2000,new Vector3(10,5,-10), new Vector3(-1,0,0), 45));
+    let camTrackComp = camTrack.addComponent(CameraTrack);
+    camTrackComp.mainCamera = camera;
+    scene.addChild(camTrack);
 
     function renderloop() {
         requestAnimationFrame(renderloop);
