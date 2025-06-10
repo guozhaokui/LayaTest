@@ -161,7 +161,7 @@ export class WavesCascade {
         });
 
         this._displacement = new Texture2D(size,size,TextureFormat.R16G16B16A16,{isStorage:true,name:'displacement'+this._id});
-        this._derivatives = new Texture2D(size,size,TextureFormat.R16G16B16A16,{isStorage:true,name:'derivatives'+this._id});
+        this._derivatives = new Texture2D(size,size,TextureFormat.R16G16B16A16,{ isStorage:true,name:'derivatives'+this._id});
         this._turbulence = new Texture2D(size,size,TextureFormat.R16G16B16A16,{isStorage:true,name:'turbulence'+this._id});
         this._turbulence2 = new Texture2D(size,size,TextureFormat.R16G16B16A16,{isStorage:true,name:'turbulence2'+this._id});
         cs2.setNumber('Lambda',1);

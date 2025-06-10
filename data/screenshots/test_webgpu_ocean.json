@@ -1,0 +1,12 @@
+[
+  {
+    "time": 300,
+    "rect": {
+      "x": 910,
+      "y": 321,
+      "width": 473,
+      "height": 327
+    },
+    "answer": "test_webgpu_ocean_0.png"
+  }
+]

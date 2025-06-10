@@ -18,16 +18,23 @@ export class CameraTrack extends Script {
         // 收集所有关键点信息并解析时间
         for (let child of this.owner._children) {
             let camera = child as Camera;
-            let timeStr = camera.name.replace('camera_', '');
-            let time = 0;
             
-            if (timeStr.startsWith('d')) {
-                // 相对时间模式
-                time = lastTime + parseInt(timeStr.substring(1));
-            } else {
-                // 绝对时间模式
-                time = parseInt(timeStr);
+            let time = 0;
+            let p = camera.name.lastIndexOf('_');
+            if(p<0) time = 0;
+            else{
+                let timeStr = camera.name.substring(p+1);
+                if (timeStr.startsWith('d')) {
+                    // 相对时间模式
+                    time = lastTime + parseInt(timeStr.substring(1));
+                } else {
+                    // 绝对时间模式
+                    time = parseInt(timeStr);
+                }
+                if(isNaN(time))
+                    time = 0;
             }
+            
             
             lastTime = time;
             this.totalDuration = Math.max(this.totalDuration, time);
@@ -84,34 +91,32 @@ export class CameraTrack extends Script {
         let segmentDuration = this.keyPoints[segmentIndex+1].time - this.keyPoints[segmentIndex].time;
         let rawT = (currentTime - this.keyPoints[segmentIndex].time) / segmentDuration;
         
-        // 应用平滑加速函数
-        let t = this.smootherStep(rawT);
-        
         // 确保有足够的点进行插值
         let p0 = Math.max(0, segmentIndex - 1);
         let p1 = segmentIndex;
         let p2 = Math.min(segmentIndex + 1, this.keyPoints.length - 1);
         let p3 = Math.min(segmentIndex + 2, this.keyPoints.length - 1);
         
-        // 位置插值
+        // 位置插值 - 使用原始t值保持自然曲线
         let pos = new Vector3();
-        pos.x = this.catmullRom(t, 
+        pos.x = this.catmullRom(rawT, 
             this.keyPoints[p0].pos.x, this.keyPoints[p1].pos.x, 
             this.keyPoints[p2].pos.x, this.keyPoints[p3].pos.x);
-        pos.y = this.catmullRom(t, 
+        pos.y = this.catmullRom(rawT, 
             this.keyPoints[p0].pos.y, this.keyPoints[p1].pos.y, 
             this.keyPoints[p2].pos.y, this.keyPoints[p3].pos.y);
-        pos.z = this.catmullRom(t, 
+        pos.z = this.catmullRom(rawT, 
             this.keyPoints[p0].pos.z, this.keyPoints[p1].pos.z, 
             this.keyPoints[p2].pos.z, this.keyPoints[p3].pos.z);
         
-        // 旋转插值 - 使用更平滑的插值
+        // 旋转插值 - 使用平滑加速函数
+        let t = this.smootherStep(rawT);
         let rot = new Quaternion();
         Quaternion.slerp(this.keyPoints[p1].rot, this.keyPoints[p2].rot, t, rot);
         
-        // 视角插值 - 也应用平滑加速
+        // 视角插值 - 保持线性插值
         let fov = this.keyPoints[p1].fov + 
-                 (this.keyPoints[p2].fov - this.keyPoints[p1].fov) * t;
+                 (this.keyPoints[p2].fov - this.keyPoints[p1].fov) * rawT;
         
         // 应用到主摄像机
         if (this.mainCamera) {
