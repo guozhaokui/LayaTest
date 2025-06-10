@@ -500,13 +500,13 @@ export class OceanGeometry {
         if(!mtl)
             return;
 
-        // let wavesGen = this._wavesGenerator;
-        // wavesGen._cascades[0]._derivatives.genMipmap();
-        // wavesGen._cascades[1]._derivatives.genMipmap();
-        // wavesGen._cascades[2]._derivatives.genMipmap();
-        // wavesGen._cascades[0]._turbulence.genMipmap();
-        // wavesGen._cascades[1]._turbulence.genMipmap();
-        // wavesGen._cascades[2]._turbulence.genMipmap();        
+        let wavesGen = this._wavesGenerator;
+        wavesGen._cascades[0]._derivatives.genMipmap();
+        wavesGen._cascades[1]._derivatives.genMipmap();
+        wavesGen._cascades[2]._derivatives.genMipmap();
+        wavesGen._cascades[0]._turbulence.genMipmap();
+        wavesGen._cascades[1]._turbulence.genMipmap();
+        wavesGen._cascades[2]._turbulence.genMipmap();        
 
         mtl.setFloat('_Time',time);
         mtl.setVector3('_WorldSpaceCameraPos',this._camera.transform.position);

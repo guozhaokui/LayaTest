@@ -7,6 +7,7 @@ import { ShaderDataType } from "laya/RenderDriver/DriverDesign/RenderDevice/Shad
 import { TextureFormat } from "laya/RenderEngine/RenderEnum/TextureFormat";
 import { Laya } from "Laya";
 import { ILaya } from "ILaya";
+import { FilterMode } from "laya/RenderEngine/RenderEnum/FilterMode";
 
 const timeDependentSpectrumCS = `
 struct Params {
@@ -160,10 +161,12 @@ export class WavesCascade {
             "DxxDzz": ShaderDataType.Texture2D_float,
         });
 
-        this._displacement = new Texture2D(size,size,TextureFormat.R16G16B16A16,{isStorage:true,name:'displacement'+this._id});
-        this._derivatives = new Texture2D(size,size,TextureFormat.R16G16B16A16,{ isStorage:true,name:'derivatives'+this._id});
-        this._turbulence = new Texture2D(size,size,TextureFormat.R16G16B16A16,{isStorage:true,name:'turbulence'+this._id});
-        this._turbulence2 = new Texture2D(size,size,TextureFormat.R16G16B16A16,{isStorage:true,name:'turbulence2'+this._id});
+        this._displacement = new Texture2D(size,size,TextureFormat.R16G16B16A16,{mipmap:true, isStorage:true,name:'displacement'+this._id});
+        this._derivatives = new Texture2D(size,size,TextureFormat.R16G16B16A16,{mipmap:true, isStorage:true,name:'derivatives'+this._id});
+        this._derivatives.filterMode = FilterMode.Trilinear;
+        this._turbulence = new Texture2D(size,size,TextureFormat.R16G16B16A16,{mipmap:true,isStorage:true,name:'turbulence'+this._id});
+        this._turbulence.filterMode = FilterMode.Trilinear;
+        this._turbulence2 = new Texture2D(size,size,TextureFormat.R16G16B16A16,{mipmap:true,isStorage:true,name:'turbulence2'+this._id});
         cs2.setNumber('Lambda',1);
         cs2.setNumber('DeltaTime',1);
         cs2.setTexture('Displacement',this._displacement);
