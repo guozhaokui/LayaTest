@@ -239,7 +239,7 @@ GLSL Start
     #endif // FOG
 
         gl_FragColor = surfaceColor;
-        gl_FragColor = vec4(vec3(inputs.smoothness),1.0);
+        //gl_FragColor = vec4(vec3(inputs.smoothness),1.0);
         //由于127变成187了，所以先转到gamma空间，后面可能有反转gamma
         gl_FragColor.rgb = pow(gl_FragColor.rgb,vec3(2.2));
     }
