@@ -4,7 +4,10 @@ import { WavesSettings } from "./WavesSettings";
 import { OceanGeometry } from "./OceanGeometry";
 import { Scene3D } from "laya/d3/core/scene/Scene3D";
 import { Camera } from "laya/d3/core/Camera";
+import {regClass} from "Decorators"
+import { HierarchyParser } from "laya/loaders/HierarchyParser";
 
+@regClass('ocean')
 export class Ocean extends Script{
     _wavesGenerator:WavesGenerator;
     _size = 256;
@@ -32,7 +35,6 @@ export class Ocean extends Script{
         let oceanGeo = this._oceanGeometry = new OceanGeometry(scene,camera);
         await this._updateSize(256);
         oceanGeo.initializeMeshes();
-
     }
 
     onUpdate(){
