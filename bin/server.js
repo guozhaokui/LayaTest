@@ -187,7 +187,7 @@ app.use((req, res, next) => {
     next();
 });
 
-function sendLocalShaderFile(f,res){
+function sendLocalShaderFile(f,res,req){
     return new Promise((resolve, reject) => {
         if (!fs.existsSync(f)) {
             resolve(false);
@@ -201,7 +201,12 @@ function sendLocalShaderFile(f,res){
                 return;
             }
 
-            const jsContent = `export default ${JSON.stringify(data)};`;
+            const secFetchDest = req.headers['sec-fetch-dest'];
+            //const secFetchMode = req.headers['sec-fetch-mode']; 
+            //如果是script表示是从import或者<script>加载的      
+            //如果不是import加载的，需要返回原始内容  
+            const isESModuleImport = secFetchDest === 'script';   
+            const jsContent = isESModuleImport?`export default ${JSON.stringify(data)};`:data;
             res.type('application/javascript').send(jsContent);
             resolve(true);
         });
@@ -215,13 +220,13 @@ app.use(async (req, res, next) => {
 
     if (fileTypes.includes(extension)) {
         let filePath = path.join(__dirname, req.path);
-        let handled = await sendLocalShaderFile(filePath, res);
+        let handled = await sendLocalShaderFile(filePath, res,req);
         if (!handled) {
             // 如果不存在，直接去源码中查找
             //  /tsc/layaAir/laya/webgl/shader/d2/files/primitive.ps.glsl
             filePath = path.join(__dirname, req.path.replace('/tsc',`${enginePath}/src`));
             // 如果文件不存在，则继续请求流程
-            handled = await sendLocalShaderFile(filePath, res);
+            handled = await sendLocalShaderFile(filePath, res,req);
             if(!handled)
                 next();
         }
