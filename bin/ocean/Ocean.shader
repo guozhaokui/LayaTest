@@ -221,8 +221,8 @@ GLSL Start
         float surfaceDepth = vMetric;
         float depthDifference = max(0.0, (backgroundDepth - surfaceDepth) - .5);
         //float foam = texture2D(_FoamTexture, fract(vWorldUV * 0.5 + _Time * 2.)).r;
-        float foam = texture2D(_FoamTexture, fract(vWorldUV /50.0+_Time/100.0 )).r;
-        jacobian += _ContactFoam * saturate(max(0.0, foam - depthDifference*depthDifference) * 5.0) * 0.9;
+        //float foam = texture2D(_FoamTexture, fract(vWorldUV /50.0+_Time/100.0 )).r;
+        jacobian += _ContactFoam * saturate(max(0.0, 0.0 - depthDifference*depthDifference) * 5.0) * 0.9;
 
         vec3 surfaceAlbedo = mix(vec3(0.0), _FoamColor.rgb, jacobian);
 
