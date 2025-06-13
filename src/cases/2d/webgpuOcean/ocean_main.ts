@@ -89,7 +89,7 @@ export async function start_ocean(){
     */
 
     //Stat.show();
-    let sceneRoot = await Scene.open('res_ocean_terrain/PiratesIsland/3d/Main_debug_3.ls',true)
+    let sceneRoot = await Scene.open('res_ocean_terrain/PiratesIsland/3d/Main_debug_2.ls',true)
     let scene = sceneRoot._scene3D;
     let sp3d = createMeshSprite(PrimitiveMesh.createBox(10,20,10),new Color(1,1,1,1));
     scene.addChild(sp3d);

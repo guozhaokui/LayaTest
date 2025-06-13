@@ -1,4 +1,5 @@
 import { property, regClass, runInEditor } from "Decorators";
+import { ILaya } from "ILaya";
 import { Script } from "laya/components/Script";
 import { Camera } from "laya/d3/core/Camera";
 import { Scene3D } from "laya/d3/core/scene/Scene3D";
@@ -15,6 +16,8 @@ enum ColorSpace {
 }
 @regClass('vzimHgZLRHCDC-DiVPuXtg') @runInEditor
 export default class Scene3DSetting extends Script {
+
+    declare owner: Scene3D;
 
     @property({ type: ColorSpace, onChange: "onChangeColorSpace" })
     public colorSpace = ColorSpace.Gamma;
@@ -37,7 +40,7 @@ export default class Scene3DSetting extends Script {
     public SHC: Vector4;
 
     public onAwake(): void {
-        let camera = this.owner.getChildByName("Controller")?.getChildByName("Controller Camera") as Camera;
+        let camera = this.owner.getChildByName("Controller")?.getChildByName("Controller Camera") as Laya.Camera;
         if (camera) {
             camera.opaquePass = true;
             camera.depthTextureMode = DepthTextureMode.Depth;
@@ -58,13 +61,13 @@ export default class Scene3DSetting extends Script {
         this.onChangeColorSpace();
         this.onChangeCustomSH();
 
-        this.SHAr = new Vector4(0.0000000, 0.1081201, 0.0000000, 0.7877415);
-        this.SHAg = new Vector4(0.0000000, 0.2183584, 0.0000000, 0.7245546);
-        this.SHAb = new Vector4(0.0000000, 0.2391598, 0.0000000, 0.6245860);
-        this.SHBr = new Vector4(0.0000000, 0.0000000, 0.0860506, 0.0000000)
-        this.SHBg = new Vector4(0.0000000, 0.0000000, 0.0411106, 0.0000000);
-        this.SHBb = new Vector4(0.0000000, 0.0000000, 0.0162586, 0.0000000);
-        this.SHC = new Vector4(0.0860507, 0.0411106, 0.0162587, 1.0000000);
+        this.SHAr = new Vector4(0.0000000, 0.0074358, 0.0000000, 0.0128160);
+        this.SHAg = new Vector4(0.0000000, -0.1863429, 0.0000000, 0.2011922);
+        this.SHAb = new Vector4(0.0000000, -0.0619662, 0.0000000, 0.2966696);
+        this.SHBr = new Vector4(0.0000000, 0.0000000, -0.0002147, 0.0000000)
+        this.SHBg = new Vector4(0.0000000, 0.0000000, -0.0649772, 0.0000000);
+        this.SHBb = new Vector4(0.0000000, 0.0000000, -0.0441279, 0.0000000);
+        this.SHC = new Vector4(-0.0002147, -0.0649772, -0.0441279, 1.0000000);
     }
 
     private onChangeColorSpace(): void {
@@ -80,14 +83,14 @@ export default class Scene3DSetting extends Script {
     private onChangeCustomSH(): void {
         if (this.enableCustomSH) {
             (this.owner as any)._shaderValues.addDefine(Shader3D.getDefineByName("ENABLECUSTOMSH"));
-            const sceneUniformMap = Scene3D.sceneUniformMap as any;
-            sceneUniformMap.addShaderUniform(Shader3D.propertyNameToID("u_SHAr"), "u_SHAr");
-            sceneUniformMap.addShaderUniform(Shader3D.propertyNameToID("u_SHAg"), "u_SHAg");
-            sceneUniformMap.addShaderUniform(Shader3D.propertyNameToID("u_SHAb"), "u_SHAb");
-            sceneUniformMap.addShaderUniform(Shader3D.propertyNameToID("u_SHBr"), "u_SHBr");
-            sceneUniformMap.addShaderUniform(Shader3D.propertyNameToID("u_SHBg"), "u_SHBg");
-            sceneUniformMap.addShaderUniform(Shader3D.propertyNameToID("u_SHBb"), "u_SHBb");
-            sceneUniformMap.addShaderUniform(Shader3D.propertyNameToID("u_SHC"), "u_SHC");
+            // const sceneUniformMap = Laya.Scene3D.sceneUniformMap as any;
+            // sceneUniformMap.addShaderUniform(Shader3D.propertyNameToID("u_SHAr"), "u_SHAr");
+            // sceneUniformMap.addShaderUniform(Shader3D.propertyNameToID("u_SHAg"), "u_SHAg");
+            // sceneUniformMap.addShaderUniform(Shader3D.propertyNameToID("u_SHAb"), "u_SHAb");
+            // sceneUniformMap.addShaderUniform(Shader3D.propertyNameToID("u_SHBr"), "u_SHBr");
+            // sceneUniformMap.addShaderUniform(Shader3D.propertyNameToID("u_SHBg"), "u_SHBg");
+            // sceneUniformMap.addShaderUniform(Shader3D.propertyNameToID("u_SHBb"), "u_SHBb");
+            // sceneUniformMap.addShaderUniform(Shader3D.propertyNameToID("u_SHC"), "u_SHC");
 
             this.onChangeSHAr();
             this.onChangeSHAg();
@@ -102,24 +105,43 @@ export default class Scene3DSetting extends Script {
     }
 
     private onChangeSHAr(): void {
+        this.SHAr && this.owner.setGlobalShaderValue("u_SHAr", ShaderDataType.Vector4, this.SHAr);
     }
 
     private onChangeSHAg(): void {
+        this.SHAg && this.owner.setGlobalShaderValue("u_SHAg", ShaderDataType.Vector4, this.SHAg);
     }
 
     private onChangeSHAb(): void {
+        this.SHAb && this.owner.setGlobalShaderValue("u_SHAb", ShaderDataType.Vector4, this.SHAb);
     }
 
     private onChangeSHBr(): void {
+        this.SHBr && this.owner.setGlobalShaderValue("u_SHBr", ShaderDataType.Vector4, this.SHBr);
     }
 
     private onChangeSHBg(): void {
+        this.SHBg && this.owner.setGlobalShaderValue("u_SHBg", ShaderDataType.Vector4, this.SHBg);
     }
 
     private onChangeSHBb(): void {
+        this.SHBb && this.owner.setGlobalShaderValue("u_SHBb", ShaderDataType.Vector4, this.SHBb);
     }
 
     private onChangeSHC(): void {
+        this.SHC && this.owner.setGlobalShaderValue("u_SHC", ShaderDataType.Vector4, this.SHC);
     }
 }
+
 ClassUtils.regClass("Scene3DSetting", Scene3DSetting);
+ILaya.Laya.addAfterInitCallback(() => {
+    console.log("add scene")
+    const sceneUniformMap = Scene3D.sceneUniformMap;
+    sceneUniformMap.addShaderUniform(Shader3D.propertyNameToID("u_SHAr"), "u_SHAr", ShaderDataType.Vector4);
+    sceneUniformMap.addShaderUniform(Shader3D.propertyNameToID("u_SHAg"), "u_SHAg", ShaderDataType.Vector4);
+    sceneUniformMap.addShaderUniform(Shader3D.propertyNameToID("u_SHAb"), "u_SHAb", ShaderDataType.Vector4);
+    sceneUniformMap.addShaderUniform(Shader3D.propertyNameToID("u_SHBr"), "u_SHBr", ShaderDataType.Vector4);
+    sceneUniformMap.addShaderUniform(Shader3D.propertyNameToID("u_SHBg"), "u_SHBg", ShaderDataType.Vector4);
+    sceneUniformMap.addShaderUniform(Shader3D.propertyNameToID("u_SHBb"), "u_SHBb", ShaderDataType.Vector4);
+    sceneUniformMap.addShaderUniform(Shader3D.propertyNameToID("u_SHC"), "u_SHC", ShaderDataType.Vector4);
+});
