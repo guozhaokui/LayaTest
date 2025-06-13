@@ -188,8 +188,8 @@ export class WavesCascade {
 
     calculateWavesAtTime(time: number) {
         let cs = this._timeDependentSpectrum;
-        //cs.setNumber('Time',time);
-        cs.setNumber('Time',0);//debug
+        cs.setNumber('Time',time);
+        //cs.setNumber('Time',0);//debug
         cs.dispatch(this._size,this._size,1);
         
         this._fft.IFFT2D(this._DxDz, this._buffer);

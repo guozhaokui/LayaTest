@@ -87,8 +87,9 @@ GLSL Start
     #include "Sprite3DVertex.glsl";
 
     #include "VertexCommon.glsl";
-
+    #include "DepthNormalUtil.glsl";
     #include "PBRVertex.glsl";
+
     varying vec2 vWorldUV;
     varying vec2 vUVCoords_c0;
     varying vec2 vUVCoords_c1;
@@ -97,6 +98,7 @@ GLSL Start
     varying vec4 vLodScales;
     varying vec4 vClipCoords;
     varying float vMetric;
+    varying float vvv;
 
     void main()
     {
@@ -127,12 +129,19 @@ GLSL Start
         displacement += texture2D(u_Displacement_c1, vUVCoords_c1).xyz * lod_c1;
         displacement += texture2D(u_Displacement_c2, vUVCoords_c2).xyz * lod_c2;
 
-        worldPos.xyz += displacement;
         worldPos.y += 30.0;
+        vec4 wPos0 = remapPositionZ(getPositionCS(worldPos));
+        vec2 screenUV = wPos0.xy / wPos0.w;
+        screenUV = screenUV * 0.5 + 0.5;
+        float depth = SAMPLE_DEPTH_TEXTURE(u_CameraDepthTexture, screenUV);
+        float backgroundDepth =max(0,min(LinearEyeDepth(depth,u_ZBufferParams)-wPos0.y,10.0))/10.0;
+        vvv = (LinearEyeDepth(depth,u_ZBufferParams).r-wPos0.z)/10.0;
+        vvv = max(0.5, min(vvv,1.0));
+
+        worldPos.xyz += displacement*vec3(1.0,vvv,1.0);
         vLodScales = vec4(lod_c0, lod_c1, lod_c2, max(displacement.y - largeWavesBias * 0.8 - _SSSBase, 0) / _SSSScale);
 
         vec4 wPos = getPositionCS(worldPos);
-
         gl_Position = remapPositionZ(wPos);
 
         vClipCoords = gl_Position;
@@ -156,6 +165,7 @@ GLSL Start
     #include "Sprite3DFrag.glsl";
 
     #include "PBRMetallicFrag.glsl";
+    #include "DepthNormalUtil.glsl";
 
     varying vec2 vWorldUV;
     varying vec2 vUVCoords_c0;
@@ -165,6 +175,7 @@ GLSL Start
     varying vec4 vLodScales;
     varying vec4 vClipCoords;
     varying float vMetric;    
+    varying float vvv;
 
     void initSurfaceInputs(inout SurfaceInputs inputs, inout PixelParams pixel)
     {
@@ -203,11 +214,15 @@ GLSL Start
 
         vec2 screenUV = vClipCoords.xy / vClipCoords.w;
         screenUV = screenUV * 0.5 + 0.5;
-        float backgroundDepth = 1.0*_CameraData.y;//texture2D(u_CameraDepthTexture, screenUV).r * _CameraData.y;
+        float depth = SAMPLE_DEPTH_TEXTURE(u_CameraDepthTexture, screenUV);
+        //depth =Linear01Depth(depth,u_ZBufferParams);
+        float backgroundDepth =LinearEyeDepth(depth,u_ZBufferParams);
+
         float surfaceDepth = vMetric;
-        float depthDifference = max(0.0, (backgroundDepth - surfaceDepth) - 0.5);
-        //float foam = 0.0;// texture2D(_FoamTexture, vWorldUV * 0.5 + _Time * 2.).r;
-        jacobian += _ContactFoam * saturate(max(0.0, 1.0 - depthDifference) * 5.0) * 0.9;
+        float depthDifference = max(0.0, (backgroundDepth - surfaceDepth) - .5);
+        //float foam = texture2D(_FoamTexture, fract(vWorldUV * 0.5 + _Time * 2.)).r;
+        float foam = texture2D(_FoamTexture, fract(vWorldUV /50.0+_Time/100.0 )).r;
+        jacobian += _ContactFoam * saturate(max(0.0, foam - depthDifference*depthDifference) * 5.0) * 0.9;
 
         vec3 surfaceAlbedo = mix(vec3(0.0), _FoamColor.rgb, jacobian);
 
@@ -240,9 +255,12 @@ GLSL Start
      #endif // FOG
 
         gl_FragColor = surfaceColor;
-        //gl_FragColor = vec4(vec3(finalEmissive),1.0);
+        float dd = saturate(depthDifference*depthDifference);
+        gl_FragColor.a = dd;
+        //gl_FragColor = vec4(vec3(texture2D(_FoamTexture, fract(vWorldUV /100.0+_Time/2.0 )).r),1.0);
         //gl_FragColor = vec4(vec3(texture2D(u_CameraDepthTexture, screenUV).x),1.0);
-        gl_FragColor = vec4(vec3(screenUV.xy,0.0),1.0);
+        //gl_FragColor = vec4(vec3((backgroundDepth - surfaceDepth)/10.0),1.0);
+        //gl_FragColor = vec4(vec3(vvv),1.0);
         //由于127变成187了，所以先转到gamma空间，后面可能有反转gamma
         // 在ide环境下，这样要去掉，不知道为什么
         //gl_FragColor.rgb = pow(gl_FragColor.rgb,vec3(1/2.2));

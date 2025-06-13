@@ -20,6 +20,7 @@ import { Vector4 } from "laya/maths/Vector4";
 import { Texture2D } from "laya/resource/Texture2D";
 import { TextureFormat } from "laya/RenderEngine/RenderEnum/TextureFormat";
 import { Bounds } from "laya/d3/math/Bounds";
+import { WrapMode } from "laya/RenderEngine/RenderEnum/WrapMode";
 
 enum Seams {
     None = 0,   // 无边缘
@@ -176,7 +177,11 @@ export class OceanGeometry {
         this._wavesGenerator = wavesGen;
         await Laya.loader.load('ocean/Ocean.shader')
         let mtl:Material = await Laya.loader.load('ocean/Ocean.lmat');
-        //this._foamTexture = await Laya.loader.load('ocean/waterFoam_circular_mask.png') as Texture2D;
+        this._foamTexture = await Laya.loader.load('ocean/waterFoam_circular_mask.png') as Texture2D;
+        // this._foamTexture.filterMode = FilterMode.Bilinear;
+        this._foamTexture.wrapModeU = WrapMode.Repeat;
+        this._foamTexture.wrapModeV = WrapMode.Repeat;
+        
         mtl.setTexture('u_Displacement_c0',wavesGen._cascades[0]._displacement);
         mtl.setTexture('u_Displacement_c1',wavesGen._cascades[1]._displacement);
         mtl.setTexture('u_Displacement_c2',wavesGen._cascades[2]._displacement);
@@ -494,7 +499,7 @@ export class OceanGeometry {
     _startTime = Date.now();
     _updateMaterials() {
         const activeLevels = this._activeLodLevels;
-        const time = ((Date.now() / 1000) - this._startTime) / 10;
+        const time = (Date.now() - this._startTime) /1000;
         //更新center,ring,trims,skirt的材质，可以先不更新
         let mtl = this._materials[0];
         if(!mtl)
@@ -510,6 +515,7 @@ export class OceanGeometry {
 
         mtl.setFloat('_Time',time);
         mtl.setVector3('_WorldSpaceCameraPos',this._camera.transform.position);
+        mtl.setFloat('_ContactFoam',(window as any).FFF||100);
         
     }
 }
