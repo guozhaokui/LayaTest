@@ -1,3 +1,4 @@
 
 var enginePath = '../../LayaAir2'
-module.exports = { enginePath}
+var testPath= '..'
+module.exports = { enginePath,testPath}

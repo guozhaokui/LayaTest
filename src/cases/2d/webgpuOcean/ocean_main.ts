@@ -8,6 +8,7 @@ import 'laya/d3/ModuleDef'
 import "./terrain/terrain"
 import "./terrain/CameraMove"
 import "./terrain/Scene3DSetting"
+import "./terrain/SSAOEffect"
 import { regClass } from "Decorators";
 import { Script } from "laya/components/Script";
 import { PrimitiveMesh } from "laya/d3/resource/models/PrimitiveMesh";

@@ -16,7 +16,7 @@ const http = require('http');
 const multer = require('multer');
 const { createCanvas, loadImage } = require('canvas');
 const {compileTestDir,layaSrc,findCorrespondingTsFile,compileTypeScript,copyFile,startWatch} = require('./watchAndCompile')
-const {enginePath } = require('./engineCfg')
+const {enginePath,testPath } = require('./engineCfg')
 const https = require('https');
 
 const app = express();
@@ -227,8 +227,12 @@ app.use(async (req, res, next) => {
             filePath = path.join(__dirname, req.path.replace('/tsc',`${enginePath}/src`));
             // 如果文件不存在，则继续请求流程
             handled = await sendLocalShaderFile(filePath, res,req);
-            if(!handled)
-                next();
+            if(!handled){
+                filePath = path.join(__dirname, req.path.replace('/tsc/test',`${testPath}/src`));
+                handled = await sendLocalShaderFile(filePath, res,req);
+                if(!handled)
+                    next();
+            }
         }
     } else {
         // 如果不是请求.glsl或.fs文件，继续请求流程
