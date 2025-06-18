@@ -11,6 +11,7 @@ var clients;
 function copyFile(src, dest) {
     fs.mkdirSync(path.dirname(dest), { recursive: true });
     fs.copyFileSync(src, dest);
+    updateMetaFile(src, dest)
     console.log(`拷贝到: ${path.relative(__dirname, dest)}`);
 }
 
@@ -48,6 +49,7 @@ function watchAndCompile(srcDir, outDir) {
             compileTypeScript(filePath, outPath);
         } else if (fileExt === '.glsl' || fileExt === '.vs') {
             copyFile(filePath, outPath);
+            updateMetaFile(filePath, outPath);
         }
 
         // 通知所有连接的客户端
@@ -137,6 +139,7 @@ function compileTypeScript(filePath, outPath) {
     // }    
     //fs.writeFileSync(jsPath, result.outputText);
     console.log(`编译到: ${path.relative(__dirname, jsPath)}`);
+    updateMetaFile(filePath, jsPath);
     return result.outputText;
 }
 
@@ -208,3 +211,16 @@ module.exports = {
     copyFile,
     startWatch
 };
+
+
+function updateMetaFile(filePath, outPath) {
+    console.log(' update: ', filePath, outPath);
+    const metaPath = outPath + '.meta';
+    const stats = fs.statSync(filePath);
+    const metaData = {
+        sourcePath: filePath,
+        lastModified: stats.mtimeMs,
+        timestamp: Date.now()
+    };
+    fs.writeFileSync(metaPath, JSON.stringify(metaData, null, 2));
+}

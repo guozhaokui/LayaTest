@@ -38,6 +38,20 @@ import { DepthTextureMode } from "laya/resource/RenderTexture";
 import { CameraTrack } from "./webgpuOcean/CameraTrack";
 
 import { start_ocean } from "./webgpuOcean/ocean_main";
+import { Stat } from "laya/utils/Stat";
+
+// function loadScript(src:string) {
+//     return new Promise((resolve, reject) => {
+//         const script = document.createElement('script');
+//         script.src = src;
+//         script.type = 'text/javascript';
+        
+//         script.onload = () => resolve(script);
+//         script.onerror = () => reject(new Error(`加载失败: ${src}`));
+        
+//         document.head.appendChild(script);
+//     });
+// }
 
 function useWebGPU(){
     LayaGL.renderDeviceFactory = new WebGPURenderDeviceFactory();
@@ -184,9 +198,10 @@ async function test() {
     //初始化引擎
     useWebGPU();    
     await Laya.init(0, 0);
+    Stat.show();
+    //await loadScript('js/sy.3d.ext_3.3.js')
     Laya.stage.scaleMode = Stage.SCALE_FULL;
     Laya.stage.screenMode = Stage.SCREEN_NONE;
-
     await start_ocean();
 
     // 创建 3D 场景

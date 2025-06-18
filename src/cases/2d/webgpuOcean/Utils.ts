@@ -26,6 +26,9 @@ export class ClockManager{
         Date.now = this._oldNow;
         performance.now = this._oldPerfNow;
     }
+    getTick(){
+        return this._tick;
+    }
     tick(){
         this._tick++;
         this._curTime = this._startTime + this._tick*this._dt;

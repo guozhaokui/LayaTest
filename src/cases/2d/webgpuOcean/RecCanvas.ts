@@ -43,8 +43,10 @@ export class RecCanvas extends Script {
 
     onUpdate(): void {
         if (this.recording) {
-            clkmgr.tick();
-            this.recorder.captureFrame();
+            //clkmgr.tick();
+            this.recorder.captureFrame().then(()=>{
+                clkmgr.tick();
+            });
             //await this.recorder.captureFrame(); // 可以等待任意长时间
             var a = 0;
         }

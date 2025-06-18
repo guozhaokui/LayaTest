@@ -1,8 +1,10 @@
 import { Script } from "laya/components/Script";
 import { CameraTrack } from "./CameraTrack";
 import { getTimeFromName, IStoryboardActor } from "./IStoryboardActor";
+import { regClass } from "Decorators";
 
 
+@regClass('0G8JKwPEQT6UGwGaLRoMgA')
 export class Storyboard extends Script{
     startTime:number;
     actors:IStoryboardActor[] = [];
@@ -11,7 +13,9 @@ export class Storyboard extends Script{
     onAwake(): void {
         let owner = this.owner;
         //todo遍历所有的子,保存到actors
-        for (let child of owner._children) {            
+        for (let child of owner._children) {       
+            if(!child.active)
+                continue;
             let camTrackInst = child.getComponent(CameraTrack);
             if(camTrackInst){//可能为空
                 camTrackInst.startTime = getTimeFromName(child.name,0);

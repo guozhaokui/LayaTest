@@ -143,9 +143,14 @@ app.use((req, res, next) => {
         if(!path.extname(filePath)) //只有没有扩展名的才加.js
             jsFilePath = `${filePath}.js`;
         if (fs.existsSync(jsFilePath)) {
-            //如果文件存在，但是比源文件旧，则需要重新编译
-            //TODO 
-            req.url += '.js'; // 修改请求路径
+            // 检查是否需要重新编译
+            if (!checkMetaFile(jsFilePath)) {
+                const srcFilePath = findCorrespondingTsFile(jsFilePath);
+                if (srcFilePath) {
+                    compileTypeScript(srcFilePath, jsFilePath);
+                }
+            }
+            req.url += '.js';
         }else{
             //如果js文件不存在。可能是没有编译
             const srcFilePath = findCorrespondingTsFile(jsFilePath);
@@ -178,6 +183,12 @@ app.use((req, res, next) => {
 			if (stats.isDirectory() && !req.path.endsWith('/')) {
 				let jsFilePath = `${filePath}.js`;
 				if (fs.existsSync(jsFilePath)) {
+                    if (!checkMetaFile(jsFilePath)) {
+                        const srcFilePath = findCorrespondingTsFile(jsFilePath);
+                        if (srcFilePath) {
+                            compileTypeScript(srcFilePath, jsFilePath);
+                        }
+                    }        
 					req.url += '.js'; // 修改请求路径
 				}
 			}
@@ -271,3 +282,23 @@ process.on('unhandledRejection', (reason, promise) => {
     console.error('Unhandled Rejection at:', promise, 'reason:', reason);
     // 可选择根据错误情况结束进程 process.exit(1);
 });
+
+
+function checkMetaFile(filePath) {
+    const metaPath = filePath + '.meta';
+    
+    // 如果没有meta文件，需要重新编译
+    if (!fs.existsSync(metaPath)) {
+        return false;
+    }
+    
+    try {
+        const metaData = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+        const sourceStats = fs.statSync(metaData.sourcePath);
+        
+        // 检查源文件最后修改时间是否匹配
+        return sourceStats.mtimeMs === metaData.lastModified;
+    } catch (e) {
+        return false;
+    }
+}

@@ -4,7 +4,9 @@ import { Transform3D } from "laya/d3/core/Transform3D";
 import { Quaternion } from "laya/maths/Quaternion";
 import { Vector3 } from "laya/maths/Vector3";
 import { getTimeFromName, IStoryboardActor } from "./IStoryboardActor";
+import { regClass } from "Decorators";
 
+@regClass('1rZGn3trTD6VPFv73gfr6w')
 export class CameraTrack extends Script implements IStoryboardActor {
     inStoryboard=false;
     startTime: number = 0;
