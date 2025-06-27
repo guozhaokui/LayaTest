@@ -11,7 +11,8 @@
         "Decorators":["../LayaAir2/src/layaAir/Decorators"],
         "LayaEnv": ["../LayaAir2/src/layaAir/LayaEnv"],
         "Config": ["../LayaAir2/src/layaAir/Config"],
-        "ILaya": ["../LayaAir2/src/layaAir/ILaya"]
+        "ILaya": ["../LayaAir2/src/layaAir/ILaya"],
+        "samples/*":["../LayaAir2/src/samples/*"]
       },
     },
   }

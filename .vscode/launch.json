@@ -8,8 +8,15 @@
             "type": "chrome",
             "request": "launch",
             "name": "Launch Chrome against localhost",
+            //"url": "https://localhost:4000/test.html?test_texture_demo_3d",
             "url": "https://localhost:4000/test.html?test_webgpu_ocean",
             "webRoot": "${workspaceFolder}/",
+            // "runtimeExecutable":"E:/Win_x64_1377155_chrome-win/chrome-win/chrome.exe",
+            // "runtimeArgs": [
+            //     //如果启动报错：Target page not found. You may need to update your "urlFilter" to match the page you want to debug
+            //     //可以先把这个目录删掉
+            //     "--user-data-dir=D:/temp/chrome-profile" // 指定临时用户目录
+            // ]
             //"sourceMapRenames": true,
             //"trace": true,
             //"sourceMapPathOverrides": {   //这个是基于map文件的sourceRoot和sources拼接的结果做替换的。现在保存了绝对路径，就不用了

@@ -32,13 +32,16 @@ class dummyCls extends Script{
 }
 
 export async function start_ocean(){
+    await Laya.loader.load('ocean/Ocean.shader')
+    //lmat自动加载shader依赖于fileconfig中记录的shander名字到文件的映射，这里没有，所以主动加载一下shader
+    await Laya.loader.load(['ocean/Ocean.lmat']);
     let packPath = 'res_ocean_terrain'
     URL.basePath = packPath;
     await Laya.loader.loadPackage('');
     //先加载shader，再加载lmat才能正确加载lmat。
     //否则lmat的加载依赖于fileconfig.json, 这里并没有
     //await Laya.loader.load('ocean/Ocean.shader')
-    await Laya.loader.load(['ocean/Ocean.lmat']);
+    //有个问题，由于有basePath下面这个其实加载的导出目录的
 
     //Stat.show();
     let sceneRoot = await Scene.open(`PiratesIsland/3d/Main_1.ls`,true)

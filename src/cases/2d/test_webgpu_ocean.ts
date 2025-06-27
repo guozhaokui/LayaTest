@@ -1,6 +1,4 @@
-import "laya/ModuleDef";
 import { Laya } from "Laya";
-import { Sprite } from "laya/display/Sprite";
 import { Stage } from "laya/display/Stage";
 import { LayaGL } from "laya/layagl/LayaGL";
 import { Vector3 } from "laya/maths/Vector3";
@@ -9,36 +7,22 @@ import { ShaderDataType } from "laya/RenderDriver/DriverDesign/RenderDevice/Shad
 import { Shader3D } from "laya/RenderEngine/RenderShader/Shader3D";
 import { ComputeCommandBuffer } from "laya/RenderDriver/DriverDesign/RenderDevice/ComputeShader/ComputeCommandBuffer"
 import { ComputeShader } from "laya/RenderDriver/DriverDesign/RenderDevice/ComputeShader/ComputeShader"
-import { Scene3D } from "laya/d3/core/scene/Scene3D";
 import { Camera } from "laya/d3/core/Camera";
-import "Laya3D" //这样才能初始化3d
 
-
-//WebGPU
-import { WebGPURender2DProcess } from "laya/RenderDriver/WebGPUDriver/2DRenderPass/WebGPURender2DProcess";
-import { WebGPU3DRenderPassFactory } from "laya/RenderDriver/WebGPUDriver/3DRenderPass/WebGPU3DRenderPassFactory";
-import { WebGPURenderDeviceFactory } from "laya/RenderDriver/WebGPUDriver/RenderDevice/WebGPURenderDeviceFactory";
-import { Laya3DRender } from "laya/d3/RenderObjs/Laya3DRender";
 import { BlinnPhongMaterial } from "laya/d3/core/material/BlinnPhongMaterial";
 import { Sprite3D } from "laya/d3/core/Sprite3D";
-import { DirectionLightCom } from "laya/d3/core/light/DirectionLightCom";
 import { Mesh } from "laya/d3/resource/models/Mesh";
 import { Color } from "laya/maths/Color";
 import { MeshFilter } from "laya/d3/core/MeshFilter";
 import { MeshRenderer } from "laya/d3/core/MeshRenderer";
-import { PrimitiveMesh } from "laya/d3/resource/models/PrimitiveMesh";
-import { Image } from "laya/ui/Image";
-import { Texture } from "laya/resource/Texture";
 import { Texture2D } from "laya/resource/Texture2D";
 import { TextureFormat } from "laya/RenderEngine/RenderEnum/TextureFormat";
-import { MyComputeShader } from "./webgpuOcean/MyComputeShader";
-import { Ocean } from "./webgpuOcean/ocean";
-import { CameraController1 } from "./webgpuOcean/CameraController1";
 import { DepthTextureMode } from "laya/resource/RenderTexture";
-import { CameraTrack } from "./webgpuOcean/CameraTrack";
 
 import { start_ocean } from "./webgpuOcean/ocean_main";
 import { Stat } from "laya/utils/Stat";
+
+
 
 // function loadScript(src:string) {
 //     return new Promise((resolve, reject) => {
@@ -53,12 +37,6 @@ import { Stat } from "laya/utils/Stat";
 //     });
 // }
 
-function useWebGPU(){
-    LayaGL.renderDeviceFactory = new WebGPURenderDeviceFactory();
-    LayaGL.render2DRenderPassFactory = new WebGPURender2DProcess();
-    Laya3DRender.Render3DPassFactory = new WebGPU3DRenderPassFactory();
-
-}
 
 function createMeshSprite(mesh:Mesh,color:Color){
     let sp3 = new Sprite3D();
@@ -196,9 +174,8 @@ function createKeyCamera(time:number|string,pos:Vector3, dir:Vector3, vof:number
 
 async function test() {
     //初始化引擎
-    useWebGPU();    
     await Laya.init(0, 0);
-    Stat.show();
+    //Stat.show();
     //await loadScript('js/sy.3d.ext_3.3.js')
     Laya.stage.scaleMode = Stage.SCALE_FULL;
     Laya.stage.screenMode = Stage.SCREEN_NONE;
@@ -260,5 +237,6 @@ async function test() {
     requestAnimationFrame(renderloop)
 }
 
-
 test();
+
+export var testConfig={capture:false}
